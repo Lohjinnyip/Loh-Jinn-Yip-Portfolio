@@ -89,10 +89,12 @@ export default function CityBackground() {
     const onScroll = () => {
       cancelAnimationFrame(raf);
       raf = requestAnimationFrame(() => {
-        const span = window.innerHeight * 0.8; // full descent by the time the pinned hero releases
-        const p = Math.min(1, Math.max(0, window.scrollY / span));
+        // progress across the WHOLE page: 0 at top, 1 at the very bottom
+        const doc = document.documentElement;
+        const max = doc.scrollHeight - window.innerHeight;
+        const p = max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0;
         // set on <html> so any element (scene layers, scroll hint) can react
-        document.documentElement.style.setProperty("--p", p.toFixed(4));
+        doc.style.setProperty("--p", p.toFixed(4));
       });
     };
     onScroll();

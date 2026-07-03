@@ -59,6 +59,8 @@ img, video { display: block; max-width: 100%; }
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+  /* legibility now that the city shows through the lighter section veils */
+  text-shadow: 0 2px 18px rgba(3, 4, 12, 0.8);
 }
 
 .gradient-text {
@@ -151,26 +153,29 @@ img, video { display: block; max-width: 100%; }
 }
 
 /* ---- FOREGROUND: balcony + lady (rises fastest = closest to camera) ----
-   Element is 142vh tall anchored at top; the balcony floor sits at ~92vh.
-   Scrolling translates it up 42vh so the balcony travels bottom -> middle,
-   while the building wall below keeps the lower screen filled.            */
+   Element is 160vh tall anchored at top; the balcony floor sits at 100vh.
+   Progress `--p` maps to the WHOLE page scroll, and the element rises 50vh:
+     p = 0    -> floor at 100vh (bottom of screen)
+     p = 0.5  -> floor at  75vh
+     p = 1    -> floor at  50vh (middle of screen)
+   The building wall below the floor keeps the lower screen filled.        */
 .bg-scene .foreground {
-  top: 0; height: 142vh;
-  transform: translateY(calc(var(--p) * -42vh));
+  top: 0; height: 160vh;
+  transform: translateY(calc(var(--p) * -50vh));
 }
 .foreground .building {
   position: absolute; left: 0; width: 100%;
-  top: 92vh; bottom: 0;
+  top: 100vh; bottom: 0;
   background: linear-gradient(180deg, #0c1022 0%, #070a16 30%, #05060c 100%);
   box-shadow: 0 -1px 0 rgba(120, 90, 170, 0.25);
 }
 .foreground .railing {
   position: absolute; left: 0; width: 100%;
-  bottom: 50vh; height: 62px; /* base sits on the 92vh floor line */
+  bottom: 60vh; height: 62px; /* base sits on the 100vh floor line (160-100) */
 }
 .foreground .lady {
   position: absolute; left: 60%; /* right of the headline text */
-  bottom: 50vh; /* feet on the floor line */
+  bottom: 60vh; /* feet on the floor line */
   width: 82px; height: 156px;
 }
 .foreground .lady svg { width: 100%; height: 100%; overflow: visible; }
@@ -198,26 +203,17 @@ img, video { display: block; max-width: 100%; }
   background: radial-gradient(120% 100% at 50% 30%, transparent 45%, rgba(5, 6, 15, 0.55) 100%);
 }
 
-/* ---------- HERO ----------
-   Tall hero + sticky inner = a "descent stage": the text stays put for the
-   first stretch of scroll while the balcony rises to the middle behind it,
-   then everything releases into the Work section.                          */
+/* ---------- HERO ---------- */
 .hero {
   position: relative;
-  min-height: 175vh;
-  overflow: visible;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
   background: transparent; /* fixed scene shows through */
 }
 
-.hero-inner {
-  position: sticky;
-  top: 0;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  z-index: 2;
-}
+.hero-inner { position: relative; z-index: 2; }
 .hero h1 {
   font-size: clamp(2.6rem, 8vw, 5.4rem);
   font-weight: 700;
@@ -246,7 +242,7 @@ img, video { display: block; max-width: 100%; }
   position: absolute; bottom: 26px; left: 50%; transform: translateX(-50%);
   z-index: 2; color: var(--text-muted); font-size: 0.75rem; letter-spacing: 0.2em; text-transform: uppercase;
   display: flex; flex-direction: column; align-items: center; gap: 8px;
-  opacity: calc(1 - var(--p) * 2); /* fades out as the descent begins */
+  opacity: calc(1 - var(--p) * 6); /* fades out shortly after scrolling begins */
   pointer-events: none;
 }
 .scroll-hint .mouse { width: 22px; height: 34px; border: 1px solid var(--text-muted); border-radius: 12px; position: relative; }
@@ -258,9 +254,11 @@ img, video { display: block; max-width: 100%; }
 
 /* ---------- WORK ---------- */
 .work {
-  background: linear-gradient(180deg, rgba(10, 8, 26, 0.82) 0%, rgba(10, 14, 36, 0.9) 100%);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  /* most of the black removed — light veil + frosted blur keeps the city visible
+     while text stays readable */
+  background: linear-gradient(180deg, rgba(10, 8, 26, 0.28) 0%, rgba(10, 14, 36, 0.32) 100%);
+  backdrop-filter: blur(7px);
+  -webkit-backdrop-filter: blur(7px);
   border-top: 1px solid var(--line);
 }
 .work-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 36px; }
@@ -330,12 +328,17 @@ img, video { display: block; max-width: 100%; }
 
 /* ---------- ABOUT ---------- */
 .about {
-  background: rgba(10, 14, 36, 0.88);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  /* most of the black removed — light veil + frosted blur keeps the city visible
+     while text stays readable. Bottom fades out to meet the feathered CONTACT top. */
+  background: linear-gradient(180deg,
+    rgba(10, 14, 36, 0.34) 0%,
+    rgba(10, 14, 36, 0.34) 78%,
+    rgba(10, 14, 36, 0) 100%);
+  backdrop-filter: blur(7px);
+  -webkit-backdrop-filter: blur(7px);
 }
 .about-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 48px; align-items: start; }
-.about p { color: var(--text-muted); line-height: 1.75; font-size: 1.05rem; }
+.about p { color: var(--text-muted); line-height: 1.75; font-size: 1.05rem; text-shadow: 0 1px 12px rgba(3, 4, 12, 0.7); }
 .about p + p { margin-top: 16px; }
 .skills { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 26px; }
 .skill { font-size: 0.85rem; padding: 8px 15px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--text); }
@@ -346,9 +349,15 @@ img, video { display: block; max-width: 100%; }
 
 /* ---------- CONTACT ---------- */
 .contact {
-  background: linear-gradient(180deg, rgba(10, 14, 36, 0.86) 0%, rgba(5, 6, 15, 0.94) 100%);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  /* keep the ~90% black background, but feather the TOP so it fades in from the
+     BEHIND THE CUT section instead of a hard seam */
+  background: linear-gradient(180deg,
+    rgba(5, 6, 15, 0) 0%,
+    rgba(5, 6, 15, 0.55) 20%,
+    rgba(5, 6, 15, 0.9) 48%,
+    rgba(5, 6, 15, 0.94) 100%);
+  backdrop-filter: blur(7px);
+  -webkit-backdrop-filter: blur(7px);
   text-align: center;
 }
 .contact h2 { font-size: clamp(2rem, 6vw, 4rem); font-weight: 700; margin-bottom: 18px; }
