@@ -153,29 +153,29 @@ img, video { display: block; max-width: 100%; }
 }
 
 /* ---- FOREGROUND: balcony + lady (rises fastest = closest to camera) ----
-   Element is 160vh tall anchored at top; the balcony floor sits at 100vh.
-   Progress `--p` maps to the WHOLE page scroll, and the element rises 50vh:
-     p = 0    -> floor at 100vh (bottom of screen)
-     p = 0.5  -> floor at  75vh
-     p = 1    -> floor at  50vh (middle of screen)
+   Element is 160vh tall anchored at top; the balcony floor sits at 95vh.
+   Progress `--p` maps to the WHOLE page scroll, and the element rises 45vh:
+     p = 0    -> floor at 95vh (near bottom, small rooftop below)
+     p = 0.5  -> floor at ~72vh
+     p = 1    -> floor at 50vh (middle of screen)
    The building wall below the floor keeps the lower screen filled.        */
 .bg-scene .foreground {
   top: 0; height: 160vh;
-  transform: translateY(calc(var(--p) * -50vh));
+  transform: translateY(calc(var(--p) * -45vh));
 }
 .foreground .building {
   position: absolute; left: 0; width: 100%;
-  top: 100vh; bottom: 0;
+  top: 95vh; bottom: 0;
   background: linear-gradient(180deg, #0c1022 0%, #070a16 30%, #05060c 100%);
   box-shadow: 0 -1px 0 rgba(120, 90, 170, 0.25);
 }
 .foreground .railing {
   position: absolute; left: 0; width: 100%;
-  bottom: 60vh; height: 62px; /* base sits on the 100vh floor line (160-100) */
+  bottom: 65vh; height: 62px; /* base sits on the 95vh floor line (160-95) */
 }
 .foreground .lady {
   position: absolute; left: 60%; /* right of the headline text */
-  bottom: 60vh; /* feet on the floor line */
+  bottom: 65vh; /* feet on the floor line */
   width: 82px; height: 156px;
 }
 .foreground .lady svg { width: 100%; height: 100%; overflow: visible; }
