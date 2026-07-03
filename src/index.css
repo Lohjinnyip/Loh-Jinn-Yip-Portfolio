@@ -16,6 +16,7 @@
   --accent-grad: linear-gradient(90deg, var(--cyan), var(--violet));
   --nav-h: 68px;
   --maxw: 1180px;
+  --p: 0; /* scroll progress 0..1, set from JS */
 }
 
 * { box-sizing: border-box; }
@@ -115,64 +116,81 @@ img, video { display: block; max-width: 100%; }
   image-rendering: pixelated; /* keeps pixel art crisp when scaled */
 }
 
+.layer { position: absolute; left: 0; width: 100%; will-change: transform; }
+
+/* ---- FAR: sky + moon + clouds (rise slowly) ---- */
 .sky {
-  position: absolute; inset: 0;
+  inset: 0; height: 100%;
   background:
     radial-gradient(60% 45% at 78% 14%, rgba(120,110,190,0.35), transparent 60%),
     linear-gradient(180deg, #1a1140 0%, #241a52 22%, #3a2560 42%, #2a1a48 62%, #120c2a 100%);
+  transform: translateY(calc(var(--p) * -8vh));
 }
-
 .moon {
-  position: absolute; top: 9%; right: 12%;
+  top: 9%; right: 12%; left: auto;
   width: 108px; height: 108px; border-radius: 50%;
   background: radial-gradient(circle at 38% 36%, #fdfbe8, #e7e2c4 55%, #c9c3a0 100%);
   box-shadow: 0 0 60px 20px rgba(253, 251, 232, 0.28), 0 0 140px 60px rgba(168, 132, 200, 0.18);
+  transform: translateY(calc(var(--p) * -5vh));
 }
-
-.cloud {
-  position: absolute;
-  border-radius: 50%;
-  background: rgba(64, 44, 96, 0.5);
-  filter: blur(28px);
-}
-.cloud-1 { top: 6%; left: -6%; width: 46%; height: 150px; animation: drift 60s linear infinite; }
+.cloud { border-radius: 50%; filter: blur(28px); background: rgba(64, 44, 96, 0.5); }
+.cloud-1 { top: 6%; width: 46%; height: 150px; animation: drift 60s linear infinite; }
 .cloud-2 { top: 18%; left: 40%; width: 42%; height: 130px; background: rgba(90, 60, 130, 0.4); animation: drift 90s linear infinite reverse; }
 @keyframes drift { from { transform: translateX(-4%); } to { transform: translateX(8%); } }
 
-.starfield { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
+.starfield { position: absolute; inset: 0; z-index: 0; pointer-events: none; transform: translateY(calc(var(--p) * -6vh)); }
 .star { position: absolute; border-radius: 50%; background: #fff; animation: twinkle var(--dur) ease-in-out infinite alternate; }
 @keyframes twinkle { from { opacity: 0.15; } to { opacity: 1; } }
 
+/* ---- MID: neon city (rises at a medium rate + slight zoom) ---- */
 .bg-scene .city {
-  position: absolute; bottom: 0; left: 0; width: 100%; height: 62%;
+  bottom: 6vh; height: 58vh;
   filter: drop-shadow(0 -2px 30px rgba(80, 50, 130, 0.35));
+  transform-origin: 50% 100%;
+  transform: translateY(calc(var(--p) * -20vh)) scale(calc(1 + var(--p) * 0.1));
 }
+
+/* ---- FOREGROUND: balcony + lady (rises fastest = closest to camera) ----
+   Element is 142vh tall anchored at top; the balcony floor sits at ~92vh.
+   Scrolling translates it up 42vh so the balcony travels bottom -> middle,
+   while the building wall below keeps the lower screen filled.            */
 .bg-scene .foreground {
-  position: absolute; bottom: 0; left: 0; width: 100%; height: 46%;
+  top: 0; height: 142vh;
+  transform: translateY(calc(var(--p) * -42vh));
 }
-.bg-scene .ember { animation: ember 3s ease-in-out infinite alternate; }
+.foreground .building {
+  position: absolute; left: 0; width: 100%;
+  top: 92vh; bottom: 0;
+  background: linear-gradient(180deg, #0c1022 0%, #070a16 30%, #05060c 100%);
+  box-shadow: 0 -1px 0 rgba(120, 90, 170, 0.25);
+}
+.foreground .railing {
+  position: absolute; left: 0; width: 100%;
+  bottom: 50vh; height: 62px; /* base sits on the 92vh floor line */
+}
+.foreground .lady {
+  position: absolute; left: 60%; /* right of the headline text */
+  bottom: 50vh; /* feet on the floor line */
+  width: 82px; height: 156px;
+}
+.foreground .lady svg { width: 100%; height: 100%; overflow: visible; }
+.ember { animation: ember 3s ease-in-out infinite alternate; }
 @keyframes ember { from { opacity: 0.6; } to { opacity: 1; } }
 
-.smoke {
-  position: absolute;
-  /* sits over the lady's cigarette ember (foreground svg is xMidYMax-sliced) */
-  left: 24.4%; bottom: 41%;
-  width: 40px; height: 120px;
-  pointer-events: none;
-}
+.smoke { position: absolute; top: -6px; left: 58px; width: 30px; height: 90px; pointer-events: none; }
 .smoke span {
-  position: absolute; bottom: 0; left: 8px;
-  width: 8px; height: 8px; border-radius: 50%;
-  background: rgba(220, 220, 235, 0.28);
+  position: absolute; bottom: 0; left: 6px;
+  width: 7px; height: 7px; border-radius: 50%;
+  background: rgba(220, 220, 235, 0.3);
   filter: blur(4px);
   animation: rise 5s ease-in infinite;
 }
-.smoke span:nth-child(2) { animation-delay: 1.6s; left: 12px; }
-.smoke span:nth-child(3) { animation-delay: 3.2s; left: 5px; }
+.smoke span:nth-child(2) { animation-delay: 1.6s; left: 10px; }
+.smoke span:nth-child(3) { animation-delay: 3.2s; left: 3px; }
 @keyframes rise {
   0% { transform: translateY(0) scale(0.6); opacity: 0; }
   15% { opacity: 0.5; }
-  100% { transform: translateY(-90px) translateX(14px) scale(2.4); opacity: 0; }
+  100% { transform: translateY(-80px) translateX(12px) scale(2.4); opacity: 0; }
 }
 
 .vignette {
@@ -180,17 +198,26 @@ img, video { display: block; max-width: 100%; }
   background: radial-gradient(120% 100% at 50% 30%, transparent 45%, rgba(5, 6, 15, 0.55) 100%);
 }
 
-/* ---------- HERO ---------- */
+/* ---------- HERO ----------
+   Tall hero + sticky inner = a "descent stage": the text stays put for the
+   first stretch of scroll while the balcony rises to the middle behind it,
+   then everything releases into the Work section.                          */
 .hero {
   position: relative;
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  overflow: hidden;
+  min-height: 175vh;
+  overflow: visible;
   background: transparent; /* fixed scene shows through */
 }
 
-.hero-inner { position: relative; z-index: 2; }
+.hero-inner {
+  position: sticky;
+  top: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  z-index: 2;
+}
 .hero h1 {
   font-size: clamp(2.6rem, 8vw, 5.4rem);
   font-weight: 700;
@@ -219,6 +246,8 @@ img, video { display: block; max-width: 100%; }
   position: absolute; bottom: 26px; left: 50%; transform: translateX(-50%);
   z-index: 2; color: var(--text-muted); font-size: 0.75rem; letter-spacing: 0.2em; text-transform: uppercase;
   display: flex; flex-direction: column; align-items: center; gap: 8px;
+  opacity: calc(1 - var(--p) * 2); /* fades out as the descent begins */
+  pointer-events: none;
 }
 .scroll-hint .mouse { width: 22px; height: 34px; border: 1px solid var(--text-muted); border-radius: 12px; position: relative; }
 .scroll-hint .mouse::after { content: ""; position: absolute; top: 6px; left: 50%; width: 3px; height: 6px; background: var(--cyan); border-radius: 2px; transform: translateX(-50%); animation: wheel 1.6s infinite; }

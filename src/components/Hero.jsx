@@ -19,12 +19,12 @@ export default function Hero() {
             Get in Touch
           </a>
         </div>
-      </div>
 
-      <a href="#work" className="scroll-hint" aria-label="Scroll to work">
-        <span className="mouse" />
-        Scroll
-      </a>
+        <a href="#work" className="scroll-hint" aria-label="Scroll to work">
+          <span className="mouse" />
+          Scroll
+        </a>
+      </div>
     </section>
   );
 }
