@@ -146,7 +146,7 @@ img, video { display: block; max-width: 100%; }
 
 /* ---- MID: neon city (rises at a medium rate + slight zoom) ---- */
 .bg-scene .city {
-  bottom: 6vh; height: 58vh;
+  bottom: 4vh; height: 82vh; /* tall enough to show the landmark towers */
   filter: drop-shadow(0 -2px 30px rgba(80, 50, 130, 0.35));
   transform-origin: 50% 100%;
   transform: translateY(calc(var(--p) * -20vh)) scale(calc(1 + var(--p) * 0.1));
@@ -169,9 +169,9 @@ img, video { display: block; max-width: 100%; }
   background: linear-gradient(180deg, #0c1022 0%, #070a16 30%, #05060c 100%);
   box-shadow: 0 -1px 0 rgba(120, 90, 170, 0.25);
 }
-.foreground .railing {
+.foreground .ledge {
   position: absolute; left: 0; width: 100%;
-  bottom: 65vh; height: 62px; /* base sits on the 95vh floor line (160-95) */
+  bottom: 65vh; height: 46px; /* railing rises from the 95vh floor line (160-95) */
 }
 .foreground .lady {
   position: absolute; left: 60%; /* right of the headline text */
@@ -256,10 +256,15 @@ img, video { display: block; max-width: 100%; }
 .work {
   /* most of the black removed — light veil + frosted blur keeps the city visible
      while text stays readable */
-  background: linear-gradient(180deg, rgba(10, 8, 26, 0.28) 0%, rgba(10, 14, 36, 0.32) 100%);
+  background: linear-gradient(180deg,
+    rgba(10, 8, 26, 0) 0%,
+    rgba(10, 8, 26, 0.28) 8%,
+    rgba(10, 14, 36, 0.32) 100%);
   backdrop-filter: blur(7px);
   -webkit-backdrop-filter: blur(7px);
-  border-top: 1px solid var(--line);
+  /* feather the blur+veil in from the top so there's no hard seam */
+  -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 7%);
+  mask-image: linear-gradient(180deg, transparent 0%, #000 7%);
 }
 .work-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 36px; }
 .filters { display: flex; flex-wrap: wrap; gap: 10px; }
@@ -359,6 +364,12 @@ img, video { display: block; max-width: 100%; }
   backdrop-filter: blur(7px);
   -webkit-backdrop-filter: blur(7px);
   text-align: center;
+  /* fill the viewport so scrolling here pushes the ABOUT content off the top —
+     only the background + contact remain in view */
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 .contact h2 { font-size: clamp(2rem, 6vw, 4rem); font-weight: 700; margin-bottom: 18px; }
 .contact p { color: var(--text-muted); max-width: 520px; margin: 0 auto 30px; }
