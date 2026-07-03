@@ -4,16 +4,17 @@
 :root {
   --bg-0: #05060f;         /* deepest night */
   --bg-1: #0a0e24;         /* navy */
-  --bg-2: #140a2e;         /* violet horizon */
-  --glow-warm: #3a2350;    /* faint city glow */
-  --text: #e8eaf6;
-  --text-muted: #949bc0;
+  --bg-2: #0a1a3e;         /* blue horizon */
+  --glow-warm: #23345a;    /* faint city glow */
+  --text: #e8eff6;
+  --text-muted: #94a6c0;
   --line: rgba(255, 255, 255, 0.08);
   --card: rgba(255, 255, 255, 0.035);
-  --cyan: #22d3ee;
-  --violet: #a855f7;
-  --pink: #f472b6;
-  --accent-grad: linear-gradient(90deg, var(--cyan), var(--violet));
+  --cyan: #38bdf8;
+  --violet: #3b82f6;       /* blue (was violet) */
+  --pink: #60a5fa;         /* light blue (was pink) */
+  --accent: #3b82f6;       /* solid blue accent */
+  --accent-grad: #3b82f6;  /* solid blue — no gradient */
   --nav-h: 68px;
   --maxw: 1180px;
   --p: 0; /* scroll progress 0..1, set from JS */
@@ -59,8 +60,6 @@ img, video { display: block; max-width: 100%; }
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  /* legibility now that the city shows through the lighter section veils */
-  text-shadow: 0 2px 18px rgba(3, 4, 12, 0.8);
 }
 
 .gradient-text {
@@ -124,20 +123,20 @@ img, video { display: block; max-width: 100%; }
 .sky {
   inset: 0; height: 100%;
   background:
-    radial-gradient(60% 45% at 78% 14%, rgba(120,110,190,0.35), transparent 60%),
-    linear-gradient(180deg, #1a1140 0%, #241a52 22%, #3a2560 42%, #2a1a48 62%, #120c2a 100%);
+    radial-gradient(60% 45% at 78% 14%, rgba(70,120,210,0.35), transparent 60%),
+    linear-gradient(180deg, #0a1230 0%, #0f1c44 22%, #143a66 42%, #0d2044 62%, #060d22 100%);
   transform: translateY(calc(var(--p) * -8vh));
 }
 .moon {
   top: 9%; right: 12%; left: auto;
   width: 108px; height: 108px; border-radius: 50%;
   background: radial-gradient(circle at 38% 36%, #fdfbe8, #e7e2c4 55%, #c9c3a0 100%);
-  box-shadow: 0 0 60px 20px rgba(253, 251, 232, 0.28), 0 0 140px 60px rgba(168, 132, 200, 0.18);
+  box-shadow: 0 0 60px 20px rgba(253, 251, 232, 0.28), 0 0 140px 60px rgba(110, 160, 220, 0.18);
   transform: translateY(calc(var(--p) * -5vh));
 }
-.cloud { border-radius: 50%; filter: blur(28px); background: rgba(64, 44, 96, 0.5); }
+.cloud { border-radius: 50%; filter: blur(28px); background: rgba(40, 66, 116, 0.5); }
 .cloud-1 { top: 6%; width: 46%; height: 150px; animation: drift 60s linear infinite; }
-.cloud-2 { top: 18%; left: 40%; width: 42%; height: 130px; background: rgba(90, 60, 130, 0.4); animation: drift 90s linear infinite reverse; }
+.cloud-2 { top: 18%; left: 40%; width: 42%; height: 130px; background: rgba(50, 84, 150, 0.4); animation: drift 90s linear infinite reverse; }
 @keyframes drift { from { transform: translateX(-4%); } to { transform: translateX(8%); } }
 
 .starfield { position: absolute; inset: 0; z-index: 0; pointer-events: none; transform: translateY(calc(var(--p) * -6vh)); }
@@ -149,8 +148,8 @@ img, video { display: block; max-width: 100%; }
   bottom: 6vh; left: 0; width: 100%; height: 56vh;
   background:
     radial-gradient(55% 100% at 62% 100%, rgba(90, 150, 210, 0.20), transparent 70%),
-    radial-gradient(42% 90% at 46% 100%, rgba(190, 120, 80, 0.14), transparent 70%),
-    radial-gradient(30% 80% at 84% 100%, rgba(150, 90, 190, 0.16), transparent 72%);
+    radial-gradient(42% 90% at 46% 100%, rgba(60, 120, 200, 0.14), transparent 70%),
+    radial-gradient(30% 80% at 84% 100%, rgba(70, 130, 210, 0.16), transparent 72%);
   transform: translateY(calc(var(--p) * -20vh));
   pointer-events: none;
 }
@@ -158,7 +157,7 @@ img, video { display: block; max-width: 100%; }
 /* ---- MID: neon city (rises at a medium rate + slight zoom) ---- */
 .bg-scene .city {
   bottom: 4vh; height: 82vh; /* tall enough to show the landmark towers */
-  filter: drop-shadow(0 -2px 30px rgba(80, 50, 130, 0.35));
+  filter: drop-shadow(0 -2px 30px rgba(40, 90, 160, 0.35));
   transform-origin: 50% 100%;
   transform: translateY(calc(var(--p) * -20vh)) scale(calc(1 + var(--p) * 0.1));
 }
@@ -178,7 +177,7 @@ img, video { display: block; max-width: 100%; }
   position: absolute; left: 0; width: 100%;
   top: 95vh; bottom: 0;
   background: linear-gradient(180deg, #0c1022 0%, #070a16 30%, #05060c 100%);
-  box-shadow: 0 -1px 0 rgba(120, 90, 170, 0.25);
+  box-shadow: 0 -1px 0 rgba(70, 120, 180, 0.25);
 }
 .foreground .ledge {
   position: absolute; left: 0; width: 100%;
@@ -350,7 +349,7 @@ img, video { display: block; max-width: 100%; }
     rgba(10, 14, 36, 0) 100%);
 }
 .about-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 48px; align-items: start; }
-.about p { color: var(--text-muted); line-height: 1.75; font-size: 1.05rem; text-shadow: 0 1px 12px rgba(3, 4, 12, 0.7); }
+.about p { color: var(--text-muted); line-height: 1.75; font-size: 1.05rem; }
 .about p + p { margin-top: 16px; }
 .skills { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 26px; }
 .skill { font-size: 0.85rem; padding: 8px 15px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--text); }
@@ -358,6 +357,20 @@ img, video { display: block; max-width: 100%; }
 .stat { border: 1px solid var(--line); border-radius: 14px; padding: 22px; background: var(--card); }
 .stat .num { font-family: "Space Grotesk", sans-serif; font-size: 2.1rem; font-weight: 700; }
 .stat .lbl { color: var(--text-muted); font-size: 0.9rem; margin-top: 4px; }
+
+/* education / languages / expertise detail row */
+.about-detail { display: grid; grid-template-columns: 1.4fr 1fr; gap: 48px; align-items: start; margin-top: 56px; }
+.info-title {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 0.78rem; letter-spacing: 0.28em; text-transform: uppercase;
+  color: var(--cyan); margin: 0 0 16px;
+}
+.edu-item + .edu-item { margin-top: 22px; }
+.edu-date { color: var(--text); font-weight: 600; font-size: 0.95rem; margin: 0; }
+.edu-school { color: var(--text-muted); font-size: 0.9rem; margin: 2px 0 0; text-transform: uppercase; letter-spacing: 0.06em; }
+.info-list { margin: 8px 0 0; padding-left: 18px; color: var(--text-muted); line-height: 1.7; }
+.info-list li { margin: 2px 0; }
+.about-detail p { color: var(--text-muted); line-height: 1.75; font-size: 1rem; text-shadow: 0 1px 12px rgba(3, 4, 12, 0.7); }
 
 /* ---------- CONTACT ---------- */
 .contact {
@@ -422,6 +435,7 @@ img, video { display: block; max-width: 100%; }
 @media (max-width: 900px) {
   .grid { grid-template-columns: repeat(2, 1fr); }
   .about-grid { grid-template-columns: 1fr; }
+  .about-detail { grid-template-columns: 1fr; gap: 34px; }
 }
 @media (max-width: 640px) {
   .section { padding: 70px 0; }
@@ -443,28 +457,20 @@ img, video { display: block; max-width: 100%; }
   .reveal { opacity: 1; transform: none; transition: none; }
 }
 
-/* ---------- TEXT OUTLINES (legibility over the 3D city) ----------
-   Multi-directional text-shadow draws a crisp dark outline around each glyph.
-   Works on the gradient headline too (shadow follows the glyph shape).      */
-.hero h1,
-.section-title,
-.contact h2 {
-  /* drop-shadow (not text-shadow) so gradient text keeps its colours */
-  filter:
-    drop-shadow(1.6px 0 0 rgba(4, 6, 16, 0.95))
-    drop-shadow(-1.6px 0 0 rgba(4, 6, 16, 0.95))
-    drop-shadow(0 1.6px 0 rgba(4, 6, 16, 0.95))
-    drop-shadow(0 -1.6px 0 rgba(4, 6, 16, 0.95))
-    drop-shadow(1.2px 1.2px 0 rgba(4, 6, 16, 0.95))
-    drop-shadow(-1.2px -1.2px 0 rgba(4, 6, 16, 0.95))
-    drop-shadow(0 5px 22px rgba(3, 4, 12, 0.6));
+/* ---------- TEXT PLATE ----------
+   A rounded, mostly-transparent glass panel that sits behind a block of text
+   (hugging the text width, not the full page). The backdrop blur keeps text
+   readable even though the fill is largely see-through.
+   ▶ To make it more/less transparent, change the 0.28 alpha below.           */
+.plate {
+  display: inline-block;
+  width: fit-content;
+  max-width: 100%;
+  padding: 20px 26px;
+  border-radius: 22px;
+  background: rgba(6, 9, 20, 0.28);
+  backdrop-filter: blur(9px);
+  -webkit-backdrop-filter: blur(9px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
-.eyebrow,
-.hero .tagline,
-.about p,
-.contact p {
-  text-shadow:
-    -1px -1px 0 rgba(3, 4, 12, 0.7), 1px -1px 0 rgba(3, 4, 12, 0.7),
-    -1px 1px 0 rgba(3, 4, 12, 0.7), 1px 1px 0 rgba(3, 4, 12, 0.7),
-    0 2px 12px rgba(3, 4, 12, 0.75);
-}
+.plate.center { margin-inline: auto; }

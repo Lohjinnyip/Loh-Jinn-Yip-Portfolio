@@ -22,9 +22,9 @@
 // ============================================================================
 
 export const COMPANIES = [
-  { id: "company-a", name: "Crave Asia", accent: "#22d3ee" }, // cyan
-  { id: "company-b", name: "Company Two", accent: "#a855f7" }, // violet
-  { id: "company-c", name: "Company Three", accent: "#f472b6" }, // pink
+  { id: "company-a", name: "Crave Asia", accent: "#38bdf8" }, // sky blue
+  { id: "company-b", name: "Company Two", accent: "#3b82f6" }, // blue
+  { id: "company-c", name: "Company Three", accent: "#60a5fa" }, // light blue
 ];
 
 export const PROJECTS = [

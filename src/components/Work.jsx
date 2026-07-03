@@ -23,7 +23,7 @@ export default function Work() {
     <section id="work" className="section work">
       <div className="container">
         <div className="work-head">
-          <div className="reveal">
+          <div className="reveal plate">
             <p className="eyebrow">Portfolio</p>
             <h2 className="section-title">Featured Work</h2>
           </div>
