@@ -1,221 +1,303 @@
 import { useEffect, useMemo, useRef } from "react";
+import { Canvas, useFrame } from "@react-three/fiber";
+import { Stars } from "@react-three/drei";
+import * as THREE from "three";
 
 // ============================================================================
-//  FIXED BACKGROUND SCENE — Kuala Lumpur skyline, 3D-shaded, scroll parallax.
-//  Landmarks: Petronas Twin Towers, Merdeka 118, KL Tower (Menara KL).
-//
-//  ▶ USE YOUR OWN PIXEL ART: put an image in /public and set BG_IMAGE.
+//  FIXED 3D BACKGROUND — Kuala Lumpur skyline in WebGL (react-three-fiber).
+//  Real extruded buildings with lit-window textures, the three KL landmarks
+//  (Petronas Twin Towers, Merdeka 118, Menara KL / KL Tower), moonlight + haze,
+//  and a camera that performs a slow drone-descent as the page scrolls.
 // ============================================================================
-const BG_IMAGE = ""; // e.g. "/background.png"
 
-const WINDOW_COLORS = ["#f9d67a", "#ffcf6b", "#22d3ee", "#8be9fd", "#f472b6", "#c084fc", "#7dd3fc"];
+const WINDOW_COLORS = ["#f9d67a", "#ffcf6b", "#ffe08a", "#8be9fd", "#bfe9ff", "#f0f6ff"];
+const N_TEX = 6;
 
 function makeRng(seed) {
-  let s = seed;
+  let s = seed % 233280;
   return () => {
     s = (s * 9301 + 49297) % 233280;
     return s / 233280;
   };
 }
 
-// depth palettes: distant = lighter/hazier, near = darker
-const FAR = { front: "#242a56", side: "#1a2046", top: "#2c3468", dim: 0.5 };
-const NEAR = { front: "#12162f", side: "#0a0d1f", top: "#1a1f40", dim: 0.85 };
-const MARK = { front: "#171d3e", side: "#0d1228", top: "#232a52" };
-
-// generate a row of extruded-box buildings across the width
-function genLayer(seed, cfg) {
+// One reusable building face: dark wall with a grid of windows, some lit.
+// Tiled per-building via texture.repeat so window size stays roughly constant.
+function makeWindowTexture(seed) {
   const rng = makeRng(seed);
-  const { groundY, minH, maxH, minW, maxW, depth, gap, colors } = cfg;
-  const list = [];
-  let x = -50;
-  while (x < 1490) {
-    const w = minW + Math.round(rng() * (maxW - minW));
-    const h = minH + Math.round(rng() * (maxH - minH));
-    const y = groundY - h;
-    const wins = [];
-    const cols = Math.max(1, Math.floor((w - 8) / 11));
-    const rows = Math.max(1, Math.floor((h - 10) / 15));
-    for (let c = 0; c < cols; c++) {
-      for (let r = 0; r < rows; r++) {
-        if (rng() < 0.55) {
-          wins.push({
-            x: x + 6 + c * 11,
-            y: y + 8 + r * 15,
-            c: WINDOW_COLORS[Math.floor(rng() * WINDOW_COLORS.length)],
-            lit: rng() > 0.42,
-          });
-        }
+  const W = 64, H = 128, cols = 4, rows = 8;
+  const c = document.createElement("canvas");
+  c.width = W;
+  c.height = H;
+  const ctx = c.getContext("2d");
+  ctx.fillStyle = "#0a0e20";
+  ctx.fillRect(0, 0, W, H);
+  const cw = W / cols, rh = H / rows;
+  for (let col = 0; col < cols; col++) {
+    for (let r = 0; r < rows; r++) {
+      const lit = rng() > 0.46;
+      ctx.fillStyle = lit
+        ? WINDOW_COLORS[Math.floor(rng() * WINDOW_COLORS.length)]
+        : "#151b34";
+      ctx.fillRect(col * cw + 2.5, r * rh + 3, cw - 5, rh - 6);
+    }
+  }
+  const tex = new THREE.CanvasTexture(c);
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+
+function useCity() {
+  return useMemo(() => {
+    const textures = Array.from({ length: N_TEX }, (_, i) => makeWindowTexture(37 + i * 911));
+    // landmark footprints to keep clear
+    const keepClear = [
+      { x: 10, z: -62, r: 22 },
+      { x: -46, z: -82, r: 20 },
+      { x: 56, z: -70, r: 16 },
+    ];
+    const rng = makeRng(1234);
+    const buildings = [];
+    for (let gz = 0; gz < 11; gz++) {
+      const z = -18 - gz * 20;
+      for (let gx = -7; gx <= 7; gx++) {
+        if (rng() < 0.13) continue; // gaps in the block
+        const x = gx * 15 + (rng() - 0.5) * 7;
+        if (keepClear.some((k) => Math.hypot(x - k.x, z - k.z) < k.r)) continue;
+        const w = 6 + rng() * 7;
+        const d = 6 + rng() * 7;
+        const tall = z < -120 ? 52 : 34;
+        const h = 8 + rng() * rng() * tall;
+        buildings.push({
+          key: `${gx}_${gz}`,
+          pos: [x, h / 2, z],
+          scale: [w, h, d],
+          texIndex: Math.floor(rng() * N_TEX),
+          repeat: [Math.max(1, Math.round(w / 6)), Math.max(2, Math.round(h / 6))],
+        });
       }
     }
-    list.push({ x, y, w, h, d: depth, colors, wins });
-    x += w + gap + Math.round(rng() * gap);
-  }
-  return list;
+    return { textures, buildings };
+  }, []);
 }
 
-// one extruded box building (roof + right side + front = 3D)
-function Building({ x, y, w, h, d, colors, wins }) {
-  const dx = d, dy = d * 0.55;
-  const top = `${x},${y} ${x + w},${y} ${x + w + dx},${y - dy} ${x + dx},${y - dy}`;
-  const side = `${x + w},${y} ${x + w + dx},${y - dy} ${x + w + dx},${y - dy + h} ${x + w},${y + h}`;
+function Building({ pos, scale, texture, repeat }) {
+  const tex = useMemo(() => {
+    const t = texture.clone();
+    t.needsUpdate = true;
+    t.repeat.set(repeat[0], repeat[1]);
+    return t;
+  }, [texture, repeat]);
   return (
-    <g>
-      <polygon points={top} fill={colors.top} />
-      <polygon points={side} fill={colors.side} />
-      <rect x={x} y={y} width={w} height={h} fill={colors.front} />
-      {wins.map((wn, i) => (
-        <rect key={i} x={wn.x} y={wn.y} width="5" height="8" fill={wn.c} opacity={wn.lit ? colors.dim : 0.12} />
+    <mesh position={pos} scale={scale} castShadow={false}>
+      <boxGeometry args={[1, 1, 1]} />
+      <meshStandardMaterial
+        color="#0b0f24"
+        map={tex}
+        emissive="#ffffff"
+        emissiveMap={tex}
+        emissiveIntensity={0.9}
+        roughness={0.85}
+        metalness={0.1}
+      />
+    </mesh>
+  );
+}
+
+// Shared look for the landmark shells (metallic bluish, faint self-glow).
+const markMat = { color: "#232a52", metalness: 0.55, roughness: 0.4, emissive: "#0d1330", emissiveIntensity: 0.4 };
+const ringMat = { color: "#8be9fd", emissive: "#8be9fd", emissiveIntensity: 1.6, toneMapped: false };
+
+function PetronasTower({ x, z }) {
+  return (
+    <group position={[x, 0, z]}>
+      {/* tapering stacked tiers */}
+      <mesh position={[0, 24, 0]}>
+        <cylinderGeometry args={[5.5, 6, 48, 16]} />
+        <meshStandardMaterial {...markMat} />
+      </mesh>
+      <mesh position={[0, 58, 0]}>
+        <cylinderGeometry args={[4, 4.6, 22, 16]} />
+        <meshStandardMaterial {...markMat} />
+      </mesh>
+      <mesh position={[0, 76, 0]}>
+        <cylinderGeometry args={[2.6, 3.4, 14, 16]} />
+        <meshStandardMaterial {...markMat} />
+      </mesh>
+      {/* pinnacle cone + spire */}
+      <mesh position={[0, 87, 0]}>
+        <coneGeometry args={[2.4, 9, 16]} />
+        <meshStandardMaterial {...markMat} />
+      </mesh>
+      <mesh position={[0, 96, 0]}>
+        <cylinderGeometry args={[0.25, 0.5, 12, 8]} />
+        <meshStandardMaterial color="#3a4270" />
+      </mesh>
+      <mesh position={[0, 102.5, 0]}>
+        <sphereGeometry args={[0.9, 12, 12]} />
+        <meshStandardMaterial color="#ffd27a" emissive="#ffb347" emissiveIntensity={3} toneMapped={false} />
+      </mesh>
+      {/* lit setback rings */}
+      <mesh position={[0, 48, 0]} rotation={[Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[5.6, 0.35, 8, 24]} />
+        <meshStandardMaterial {...ringMat} />
+      </mesh>
+      <mesh position={[0, 69, 0]} rotation={[Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[4.1, 0.3, 8, 24]} />
+        <meshStandardMaterial {...ringMat} />
+      </mesh>
+    </group>
+  );
+}
+
+function Petronas({ x, z }) {
+  const gap = 9;
+  return (
+    <group>
+      <PetronasTower x={x - gap} z={z} />
+      <PetronasTower x={x + gap} z={z} />
+      {/* skybridge: two decks between the towers */}
+      <mesh position={[x, 40, z]}>
+        <boxGeometry args={[gap * 2, 1.2, 2]} />
+        <meshStandardMaterial {...markMat} />
+      </mesh>
+      <mesh position={[x, 43, z]}>
+        <boxGeometry args={[gap * 2, 1.2, 2]} />
+        <meshStandardMaterial {...markMat} />
+      </mesh>
+    </group>
+  );
+}
+
+function Merdeka({ x, z }) {
+  return (
+    <group position={[x, 0, z]}>
+      {/* faceted tapering shaft */}
+      <mesh position={[0, 55, 0]}>
+        <cylinderGeometry args={[3.5, 8, 110, 6]} />
+        <meshStandardMaterial {...markMat} />
+      </mesh>
+      {/* crown spire */}
+      <mesh position={[0, 128, 0]}>
+        <coneGeometry args={[3.2, 36, 6]} />
+        <meshStandardMaterial {...markMat} />
+      </mesh>
+      <mesh position={[0, 150, 0]}>
+        <cylinderGeometry args={[0.2, 0.4, 16, 6]} />
+        <meshStandardMaterial color="#3a4270" />
+      </mesh>
+      <mesh position={[0, 158, 0]}>
+        <sphereGeometry args={[0.9, 12, 12]} />
+        <meshStandardMaterial color="#ff6b6b" emissive="#ff4d4d" emissiveIntensity={3} toneMapped={false} />
+      </mesh>
+      {/* lit band near crown base */}
+      <mesh position={[0, 110, 0]} rotation={[Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[3.6, 0.3, 8, 6]} />
+        <meshStandardMaterial {...ringMat} />
+      </mesh>
+    </group>
+  );
+}
+
+function KLTower({ x, z }) {
+  return (
+    <group position={[x, 0, z]}>
+      {/* slender shaft */}
+      <mesh position={[0, 40, 0]}>
+        <cylinderGeometry args={[2, 3.2, 80, 20]} />
+        <meshStandardMaterial {...markMat} />
+      </mesh>
+      {/* bulb pod (the "tuar" head) */}
+      <mesh position={[0, 84, 0]}>
+        <sphereGeometry args={[6, 20, 16]} />
+        <meshStandardMaterial {...markMat} />
+      </mesh>
+      <mesh position={[0, 82, 0]} rotation={[Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[6.1, 0.4, 8, 28]} />
+        <meshStandardMaterial {...ringMat} />
+      </mesh>
+      {/* antenna */}
+      <mesh position={[0, 100, 0]}>
+        <coneGeometry args={[0.6, 26, 12]} />
+        <meshStandardMaterial color="#3a4270" />
+      </mesh>
+      <mesh position={[0, 114, 0]}>
+        <sphereGeometry args={[0.8, 12, 12]} />
+        <meshStandardMaterial color="#ff6b6b" emissive="#ff4d4d" emissiveIntensity={3} toneMapped={false} />
+      </mesh>
+    </group>
+  );
+}
+
+function Moon() {
+  return (
+    <group position={[85, 95, -230]}>
+      <mesh>
+        <sphereGeometry args={[16, 32, 32]} />
+        <meshStandardMaterial color="#fdfbe8" emissive="#e7e2c4" emissiveIntensity={1.4} toneMapped={false} />
+      </mesh>
+      <pointLight color="#cfd4ff" intensity={2.2} distance={600} decay={0} />
+    </group>
+  );
+}
+
+function CameraRig({ scroll }) {
+  const target = useMemo(() => new THREE.Vector3(), []);
+  useFrame(({ camera }) => {
+    const p = scroll.current;
+    // drone descent: start high looking over the skyline, sink toward street level
+    const ty = 66 - p * 40;
+    const tz = 152 - p * 46;
+    camera.position.y += (ty - camera.position.y) * 0.06;
+    camera.position.z += (tz - camera.position.z) * 0.06;
+    camera.position.x += (0 - camera.position.x) * 0.06;
+    target.set(0, 40 - p * 12, -70);
+    camera.lookAt(target);
+  });
+  return null;
+}
+
+function Scene({ scroll }) {
+  const { textures, buildings } = useCity();
+  return (
+    <>
+      <color attach="background" args={["#0c0922"]} />
+      <fog attach="fog" args={["#140f2e", 70, 340]} />
+
+      {/* moonlight + ambient fill */}
+      <ambientLight intensity={0.35} color="#4a4d80" />
+      <directionalLight position={[80, 120, -40]} intensity={0.9} color="#aab0ff" />
+      <hemisphereLight args={["#2a2660", "#05060f", 0.4]} />
+      <Moon />
+
+      <Stars radius={280} depth={80} count={1400} factor={4} saturation={0} fade speed={0.6} />
+
+      {/* street/ground haze plane */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.5, -80]}>
+        <planeGeometry args={[600, 500]} />
+        <meshStandardMaterial color="#080a18" roughness={1} metalness={0} />
+      </mesh>
+
+      {/* generic city blocks */}
+      {buildings.map((b) => (
+        <Building key={b.key} pos={b.pos} scale={b.scale} texture={textures[b.texIndex]} repeat={b.repeat} />
       ))}
-    </g>
-  );
-}
 
-// ---- LANDMARKS --------------------------------------------------------------
+      {/* KL landmarks */}
+      <Merdeka x={-46} z={-82} />
+      <Petronas x={10} z={-62} />
+      <KLTower x={56} z={-70} />
 
-function PetronasTower({ cx, groundY }) {
-  const d = 9, dy = 5;
-  const bodyTop = groundY - 300;
-  const t2 = groundY - 370;
-  const t3 = groundY - 414;
-  const coneTop = groundY - 450;
-  const spireTop = groundY - 540;
-  const rng = makeRng(Math.round(cx) * 13 + 7);
-  const wins = [];
-  for (let r = 0; r < 18; r++) {
-    const yy = groundY - 16 - r * 15;
-    if (yy < bodyTop) break;
-    for (let c = -2; c <= 2; c++) {
-      if (rng() < 0.55) wins.push({ x: cx + c * 11 - 2, y: yy, lit: rng() > 0.4 });
-    }
-  }
-  return (
-    <g>
-      {/* depth side of main body */}
-      <polygon points={`${cx + 30},${groundY} ${cx + 30 + d},${groundY - dy} ${cx + 30 + d},${bodyTop - dy} ${cx + 30},${bodyTop}`} fill={MARK.side} />
-      {/* stacked tiers */}
-      <rect x={cx - 30} y={bodyTop} width="60" height={groundY - bodyTop} fill={MARK.front} />
-      <rect x={cx - 24} y={t2} width="48" height={bodyTop - t2} fill={MARK.front} />
-      <rect x={cx - 17} y={t3} width="34" height={t2 - t3} fill={MARK.front} />
-      {/* cone + pinnacle */}
-      <polygon points={`${cx - 17},${t3} ${cx + 17},${t3} ${cx + 4},${coneTop} ${cx - 4},${coneTop}`} fill={MARK.top} />
-      <rect x={cx - 1.5} y={spireTop} width="3" height={coneTop - spireTop} fill="#3a4270" />
-      <circle cx={cx} cy={spireTop} r="2.5" fill="#ffd27a" className="ember" />
-      {/* setback light rings */}
-      <rect x={cx - 30} y={bodyTop - 3} width="60" height="3" fill="#8be9fd" opacity="0.5" />
-      <rect x={cx - 24} y={t2 - 3} width="48" height="3" fill="#8be9fd" opacity="0.5" />
-      {wins.map((w, i) => (
-        <rect key={i} x={w.x} y={w.y} width="4" height="9" fill="#bfe9ff" opacity={w.lit ? 0.85 : 0.15} />
-      ))}
-    </g>
-  );
-}
-
-function Petronas({ cx, groundY }) {
-  const gap = 78;
-  const l = cx - gap / 2;
-  const r = cx + gap / 2;
-  const by = groundY - 200; // bridge height
-  return (
-    <g>
-      <PetronasTower cx={l} groundY={groundY} />
-      <PetronasTower cx={r} groundY={groundY} />
-      {/* skybridge: two decks + angled support legs */}
-      <rect x={l + 17} y={by} width={r - l - 34} height="5" fill="#39406e" />
-      <rect x={l + 17} y={by + 12} width={r - l - 34} height="5" fill="#39406e" />
-      <line x1={cx} y1={by + 17} x2={l + 20} y2={by + 70} stroke="#2c3260" strokeWidth="3" />
-      <line x1={cx} y1={by + 17} x2={r - 20} y2={by + 70} stroke="#2c3260" strokeWidth="3" />
-    </g>
-  );
-}
-
-function Merdeka({ cx, groundY }) {
-  const d = 10, dy = 6;
-  const wb = 66, wt = 22;
-  const shaftTop = groundY - 560;
-  const spireTop = groundY - 700;
-  const crownStart = groundY - 470;
-  const rng = makeRng(455);
-  const wins = [];
-  for (let r = 0; r < 34; r++) {
-    const yy = groundY - 18 - r * 16;
-    const frac = (groundY - yy) / 560;
-    const halfW = (wb - (wb - wt) * frac) / 2 - 6;
-    for (let c = -3; c <= 3; c++) {
-      const wx = cx + c * (halfW / 3);
-      if (Math.abs(wx - cx) <= halfW && rng() < 0.5) wins.push({ x: wx - 2, y: yy, lit: rng() > 0.4 });
-    }
-  }
-  return (
-    <g>
-      <polygon points={`${cx + wb / 2},${groundY} ${cx + wb / 2 + d},${groundY - dy} ${cx + wt / 2 + d},${shaftTop - dy} ${cx + wt / 2},${shaftTop}`} fill={MARK.side} />
-      <polygon points={`${cx - wb / 2},${groundY} ${cx + wb / 2},${groundY} ${cx + wt / 2},${shaftTop} ${cx - wt / 2},${shaftTop}`} fill={MARK.front} />
-      {[0, 1, 2, 3, 4].map((i) => {
-        const yy = crownStart - i * 20;
-        const frac = (groundY - yy) / 560;
-        const halfW = (wb - (wb - wt) * frac) / 2;
-        return <polyline key={i} points={`${cx - halfW},${yy} ${cx},${yy - 12} ${cx + halfW},${yy}`} fill="none" stroke="#3b4472" strokeWidth="1.5" opacity="0.8" />;
-      })}
-      <polygon points={`${cx - wt / 2},${shaftTop} ${cx + wt / 2},${shaftTop} ${cx + 2},${spireTop} ${cx - 2},${spireTop}`} fill={MARK.top} />
-      <rect x={cx - 1} y={spireTop - 40} width="2" height="40" fill="#3a4270" />
-      <circle cx={cx} cy={spireTop - 40} r="2.5" fill="#ff6b6b" className="ember" />
-      {wins.map((w, i) => (
-        <rect key={i} x={w.x} y={w.y} width="4" height="8" fill="#cfe9ff" opacity={w.lit ? 0.8 : 0.14} />
-      ))}
-    </g>
-  );
-}
-
-function KLTower({ cx, groundY }) {
-  const d = 7, dy = 4;
-  const sw = 18;
-  const podY = groundY - 360;
-  const antTop = groundY - 470;
-  return (
-    <g>
-      <polygon points={`${cx + sw / 2},${groundY} ${cx + sw / 2 + d},${groundY - dy} ${cx + sw / 2 - 2 + d},${podY - dy} ${cx + sw / 2 - 2},${podY}`} fill={MARK.side} />
-      <polygon points={`${cx - sw / 2},${groundY} ${cx + sw / 2},${groundY} ${cx + sw / 2 - 2},${podY} ${cx - sw / 2 + 2},${podY}`} fill={MARK.front} />
-      <rect x={cx - 14} y={podY - 4} width="28" height="6" rx="3" fill={MARK.top} />
-      <ellipse cx={cx} cy={podY - 20} rx="20" ry="16" fill={MARK.front} />
-      <path d={`M ${cx - 20} ${podY - 22} Q ${cx} ${podY - 54} ${cx + 20} ${podY - 22} Z`} fill={MARK.top} />
-      <rect x={cx - 15} y={podY - 22} width="30" height="3" fill="#ffd27a" opacity="0.8" />
-      <rect x={cx - 12} y={podY - 14} width="24" height="3" fill="#8be9fd" opacity="0.7" />
-      <rect x={cx - 1.5} y={antTop} width="3" height={podY - 36 - antTop} fill="#3a4270" />
-      <circle cx={cx} cy={antTop} r="2.5" fill="#ff6b6b" className="ember" />
-    </g>
-  );
-}
-
-function Stars({ count = 70 }) {
-  const stars = useMemo(() => {
-    const rng = makeRng(99);
-    return Array.from({ length: count }, (_, i) => {
-      const size = rng() * 2 + 0.6;
-      return {
-        key: i, left: `${rng() * 100}%`, top: `${rng() * 55}%`,
-        width: `${size}px`, height: `${size}px`,
-        "--dur": `${2 + rng() * 3}s`, animationDelay: `${rng() * 3}s`,
-      };
-    });
-  }, [count]);
-  return (
-    <div className="starfield">
-      {stars.map(({ key, ...style }) => <span key={key} className="star" style={style} />)}
-    </div>
+      <CameraRig scroll={scroll} />
+    </>
   );
 }
 
 export default function CityBackground() {
-  const GROUND = 820;
-  const scene = useMemo(() => ({
-    far: genLayer(21, { groundY: GROUND, minH: 120, maxH: 300, minW: 34, maxW: 60, depth: 7, gap: 8, colors: FAR }),
-    near: genLayer(88, { groundY: GROUND, minH: 150, maxH: 340, minW: 48, maxW: 92, depth: 16, gap: 14, colors: NEAR }),
-  }), []);
+  const scroll = useRef(0);
 
-  const ref = useRef(null);
   useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
     let raf = 0;
     const onScroll = () => {
       cancelAnimationFrame(raf);
@@ -223,7 +305,8 @@ export default function CityBackground() {
         const doc = document.documentElement;
         const max = doc.scrollHeight - window.innerHeight;
         const p = max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0;
-        doc.style.setProperty("--p", p.toFixed(4));
+        scroll.current = p;
+        doc.style.setProperty("--p", p.toFixed(4)); // still drives CSS (scroll-hint fade)
       });
     };
     onScroll();
@@ -236,70 +319,15 @@ export default function CityBackground() {
     };
   }, []);
 
-  if (BG_IMAGE) {
-    return <div className="bg-scene bg-image" style={{ backgroundImage: `url(${BG_IMAGE})` }} aria-hidden="true" />;
-  }
-
   return (
-    <div className="bg-scene" ref={ref} aria-hidden="true">
-      <div className="layer sky" />
-      <div className="layer cloud cloud-1" />
-      <div className="layer cloud cloud-2" />
-      <div className="layer moon" />
-      <Stars />
-      {/* soft KLCC-style city glow behind the skyline */}
-      <div className="layer glow" />
-
-      {/* Kuala Lumpur skyline */}
-      <svg className="layer city" viewBox={`0 0 1440 ${GROUND}`} preserveAspectRatio="xMidYMax slice">
-        <g opacity="0.9">
-          {scene.far.map((b, i) => <Building key={`f${i}`} {...b} />)}
-        </g>
-        <KLTower cx={1210} groundY={GROUND} />
-        <Merdeka cx={720} groundY={GROUND} />
-        <Petronas cx={980} groundY={GROUND} />
-        {scene.near.map((b, i) => <Building key={`n${i}`} {...b} />)}
-      </svg>
-
-      {/* foreground: 3D balcony + lady */}
-      <div className="layer foreground">
-        <div className="building" />
-        {/* 3D balcony railing */}
-        <svg className="ledge" viewBox="0 0 1440 44" preserveAspectRatio="none">
-          {Array.from({ length: 72 }, (_, i) => {
-            const x = i * 20 + 5;
-            return (
-              <g key={i}>
-                <rect x={x} y="10" width="7" height="34" fill="#0d1224" />
-                <rect x={x} y="10" width="2.5" height="34" fill="#232a52" />
-              </g>
-            );
-          })}
-          <rect x="0" y="36" width="1440" height="8" fill="#0a0d1c" />
-          {/* top rail with a lit cap edge (depth) */}
-          <polygon points="0,4 1440,4 1440,1 0,1" fill="#2a3157" />
-          <rect x="0" y="4" width="1440" height="8" fill="#0d1224" />
-          <rect x="0" y="4" width="1440" height="2" fill="#252c52" />
-        </svg>
-
-        {/* the lady, standing at the railing, smoking */}
-        <div className="lady">
-          <svg viewBox="0 0 90 170" preserveAspectRatio="xMidYMax meet">
-            <g fill="#04050b">
-              <path d="M18 170 C14 108 22 58 40 22 C46 10 62 10 68 22 C86 58 92 108 88 170 Z" />
-              <rect x="47" y="8" width="12" height="16" />
-              <circle cx="53" cy="0" r="13" />
-              <path d="M40 -6 C34 14 34 52 40 82 L50 82 C46 50 48 16 54 -2 Z" />
-              <path d="M66 44 C84 36 90 20 78 10 C74 6 67 8 67 14 C67 24 60 34 56 40 Z" />
-            </g>
-            {/* rim light on the dress for depth */}
-            <path d="M18 170 C15 112 22 60 39 24 L44 27 C29 62 22 112 25 170 Z" fill="#171a33" opacity="0.7" />
-            <circle cx="70" cy="9" r="2.6" fill="#ff8a3d" className="ember" />
-          </svg>
-          <div className="smoke"><span /><span /><span /></div>
-        </div>
-      </div>
-
+    <div className="bg-scene" aria-hidden="true">
+      <Canvas
+        dpr={[1, 2]}
+        camera={{ position: [0, 66, 152], fov: 55, near: 0.1, far: 900 }}
+        gl={{ antialias: true, powerPreference: "high-performance" }}
+      >
+        <Scene scroll={scroll} />
+      </Canvas>
       <div className="vignette" />
     </div>
   );
