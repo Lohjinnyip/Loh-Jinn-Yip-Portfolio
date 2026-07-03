@@ -91,16 +91,6 @@ export default function About() {
                   <li key={l}>{l}</li>
                 ))}
               </ul>
-
-              <p className="info-title" style={{ marginTop: 34 }}>
-                Photos and Videos Editing
-              </p>
-              <p style={{ marginBottom: 0 }}>
-                I am proficient in using Adobe software to edit photos and videos
-                for promoting content on the company's social media platforms.
-                Additionally, I am able to use CapCut for quick video edits and
-                Canva for creating promotional posters.
-              </p>
             </div>
           </div>
         </div>

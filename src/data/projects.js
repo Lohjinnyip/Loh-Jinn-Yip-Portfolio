@@ -13,10 +13,14 @@
 //       thumbnail   : (optional) image path. Put images in /public/thumbnails/
 //                     and reference as "/thumbnails/myshot.jpg".
 //                     If omitted, a colored gradient placeholder is shown.
-//       videoSrc    : a YouTube URL, a Vimeo URL, OR a local file.
-//                     For local files, put the .mp4 in /public/videos/
-//                     and reference as "/videos/myclip.mp4".
-//                     Tip: compress large .mov files to .mp4 before adding.
+//       videoSrc    : a YouTube URL or a Vimeo URL (used as a FALLBACK).
+//       videoFile   : (optional, RECOMMENDED) a self-hosted file, e.g.
+//                     "/videos/myclip.mp4". Put the .mp4 in /public/videos/.
+//                     A self-hosted file plays at EXACTLY the resolution you
+//                     export (e.g. 720p) with no quality menu / no "Auto 360p".
+//                     If set, it is used instead of videoSrc; if it fails to
+//                     load, playback falls back to videoSrc (YouTube/Vimeo).
+//                     Tip: export/compress to 720p H.264 .mp4 before adding.
 //       description : (optional) short blurb shown in the player popup.
 //
 // ============================================================================
@@ -30,13 +34,16 @@ export const COMPANIES = [
 export const PROJECTS = [
   {
     id: "p1",
-    title: "Product Launch Trailer",
+    title: "Melaka River of Time",
     company: "company-a",
     category: "Trailer",
-    year: "2026",
-    thumbnail: "",
-    videoSrc: "",
-    description: "Cinematic launch trailer — motion graphics, sound design and grade.",
+    year: "2025",
+    thumbnail: "https://img.youtube.com/vi/g_54LYkjC0Y/hqdefault.jpg",
+    // Drop a 720p export here for guaranteed 720p playback (no quality menu).
+    // Until the file exists, playback falls back to the YouTube link below.
+    videoFile: "/videos/melaka-river-of-time-720p.mp4",
+    videoSrc: "https://youtu.be/g_54LYkjC0Y",
+    description: "Cultural promo capturing Melaka's historic river — edited, graded and scored.",
   },
   {
     id: "p2",
