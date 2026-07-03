@@ -264,15 +264,8 @@ img, video { display: block; max-width: 100%; }
 
 /* ---------- WORK ---------- */
 .work {
-  /* most of the black removed — light veil + frosted blur keeps the city visible
-     while text stays readable */
-  background: linear-gradient(180deg,
-    rgba(10, 8, 26, 0) 0%,
-    rgba(10, 8, 26, 0.28) 8%,
-    rgba(10, 14, 36, 0.32) 100%);
-  /* feather the veil in from the top so there's no hard seam */
-  -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 7%);
-  mask-image: linear-gradient(180deg, transparent 0%, #000 7%);
+  /* no full-width veil — the single .plate.wide panel provides the backdrop */
+  background: transparent;
 }
 .work-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 36px; }
 .filters { display: flex; flex-wrap: wrap; gap: 10px; }
@@ -341,12 +334,8 @@ img, video { display: block; max-width: 100%; }
 
 /* ---------- ABOUT ---------- */
 .about {
-  /* most of the black removed — light veil + frosted blur keeps the city visible
-     while text stays readable. Bottom fades out to meet the feathered CONTACT top. */
-  background: linear-gradient(180deg,
-    rgba(10, 14, 36, 0.34) 0%,
-    rgba(10, 14, 36, 0.34) 78%,
-    rgba(10, 14, 36, 0) 100%);
+  /* no full-width veil — the single .plate.wide panel provides the backdrop */
+  background: transparent;
 }
 .about-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 48px; align-items: start; }
 .about p { color: var(--text-muted); line-height: 1.75; font-size: 1.05rem; }
@@ -370,7 +359,7 @@ img, video { display: block; max-width: 100%; }
 .edu-school { color: var(--text-muted); font-size: 0.9rem; margin: 2px 0 0; text-transform: uppercase; letter-spacing: 0.06em; }
 .info-list { margin: 8px 0 0; padding-left: 18px; color: var(--text-muted); line-height: 1.7; }
 .info-list li { margin: 2px 0; }
-.about-detail p { color: var(--text-muted); line-height: 1.75; font-size: 1rem; text-shadow: 0 1px 12px rgba(3, 4, 12, 0.7); }
+.about-detail p { color: var(--text-muted); line-height: 1.75; font-size: 1rem; }
 
 /* ---------- CONTACT ---------- */
 .contact {
@@ -473,4 +462,19 @@ img, video { display: block; max-width: 100%; }
   -webkit-backdrop-filter: blur(9px);
   border: 1px solid rgba(255, 255, 255, 0.05);
 }
-.plate.center { margin-inline: auto; }
+.plate.center {
+  margin-inline: auto;
+  /* no box behind the contact text — just the text over the background */
+  background: none;
+  border: 0;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  padding: 0;
+}
+/* One big panel for a whole section (fills the content width, not just the text) */
+.plate.wide {
+  display: block;
+  width: auto;
+  padding: 38px clamp(24px, 4vw, 46px);
+  border-radius: 28px;
+}

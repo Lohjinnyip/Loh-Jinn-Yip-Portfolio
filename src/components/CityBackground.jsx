@@ -4,16 +4,18 @@ import * as THREE from "three";
 
 // ============================================================================
 //  FIXED PIXEL-ART BACKGROUND — Katana-Zero-style Kuala Lumpur night skyline.
+//  Composition is locked to viewport fractions (independent of aspect):
+//      sky  ≈ top 40%   |   city ≈ 50%   |   balcony ≈ bottom 10%.
 //  Layered parallax planes (low-res, nearest-filtered = crisp pixels) driven by
-//  three.js: starry purple sky + moon, drifting clouds, neon-lit skyline with
-//  the Petronas Twin Towers, Merdeka 118 and KL Tower, and a lady smoking on a
+//  three.js: starry purple sky + moon, drifting clouds, neon skyline with the
+//  Petronas Twin Towers, Merdeka 118 and KL Tower, and a lady smoking on a
 //  rooftop ledge on the right, gazing left across the city.
 // ============================================================================
 
-const TW = 480, TH = 270; // texture resolution (16:9) — low res = chunky pixels
+const TW = 640, TH = 360; // texture resolution (16:9) — low res = chunky pixels
+const ROOF = 0.88;        // viewport fraction where the skyline/balcony meet
 
-// palettes
-const SKY = { top: "#160f36", mid: "#2a1a55", horizon: "#4a2a6e", band: "#6a3a86" };
+const SKY = { top: "#160f36", mid: "#2a1a55", horizon: "#452a6a", band: "#5f3880" };
 const NEON = ["#22d3ee", "#8be9fd", "#f472b6", "#ff5aa8", "#ffcf6b", "#c084fc", "#7dd3fc", "#4dd0e1"];
 
 function makeRng(seed) {
@@ -22,14 +24,13 @@ function makeRng(seed) {
 }
 const pick = (rng, arr) => arr[Math.floor(rng() * arr.length)];
 
-// build a CanvasTexture from a draw callback, kept blocky with NearestFilter
-function makeTex(draw) {
+function makeTex(w, h, draw) {
   const c = document.createElement("canvas");
-  c.width = TW;
-  c.height = TH;
+  c.width = w;
+  c.height = h;
   const ctx = c.getContext("2d");
   ctx.imageSmoothingEnabled = false;
-  draw(ctx);
+  draw(ctx, w, h);
   const tex = new THREE.CanvasTexture(c);
   tex.magFilter = THREE.NearestFilter;
   tex.minFilter = THREE.NearestFilter;
@@ -37,7 +38,7 @@ function makeTex(draw) {
   return tex;
 }
 
-// a lit window with a faint halo (fake bloom)
+// lit window with a faint halo (fake bloom)
 function win(ctx, x, y, w, h, color) {
   ctx.globalAlpha = 0.22;
   ctx.fillStyle = color;
@@ -46,47 +47,30 @@ function win(ctx, x, y, w, h, color) {
   ctx.fillRect(x, y, w, h);
 }
 
-// ---- draw: sky (gradient + moon + stars) -----------------------------------
-function drawSky(ctx) {
-  const g = ctx.createLinearGradient(0, 0, 0, TH);
+// ---- sky: gradient + moon (upper-right) + stars ----------------------------
+function drawSky(ctx, W, H) {
+  const g = ctx.createLinearGradient(0, 0, 0, H);
   g.addColorStop(0, SKY.top);
-  g.addColorStop(0.4, SKY.mid);
-  g.addColorStop(0.72, SKY.horizon);
-  g.addColorStop(0.86, SKY.band);
+  g.addColorStop(0.45, SKY.mid);
+  g.addColorStop(0.78, SKY.horizon);
+  g.addColorStop(0.9, SKY.band);
   g.addColorStop(1, SKY.mid);
   ctx.fillStyle = g;
-  ctx.fillRect(0, 0, TW, TH);
+  ctx.fillRect(0, 0, W, H);
 
-  // moon, upper-left-ish (so the lady on the right gazes toward it/the city)
-  const mx = 118, my = 58, mr = 20;
-  const mg = ctx.createRadialGradient(mx, my, 2, mx, my, mr * 2.6);
-  mg.addColorStop(0, "rgba(253,251,232,0.55)");
-  mg.addColorStop(1, "rgba(253,251,232,0)");
-  ctx.fillStyle = mg;
-  ctx.fillRect(mx - mr * 2.6, my - mr * 2.6, mr * 5.2, mr * 5.2);
-  ctx.fillStyle = "#fdfbe8";
-  ctx.beginPath();
-  ctx.arc(mx, my, mr, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = "#e6e1c6";
-  [[mx - 6, my - 4, 4], [mx + 5, my + 3, 3], [mx + 2, my - 8, 2.5]].forEach(([x, y, r]) => {
-    ctx.beginPath();
-    ctx.arc(x, y, r, 0, Math.PI * 2);
-    ctx.fill();
-  });
-
-  // horizon city-glow haze
-  const hg = ctx.createRadialGradient(TW * 0.5, TH * 0.82, 10, TW * 0.5, TH * 0.82, TW * 0.5);
+  // horizon city-glow haze near where the skyline sits
+  const hy = H * 0.85;
+  const hg = ctx.createRadialGradient(W * 0.5, hy, 10, W * 0.5, hy, W * 0.5);
   hg.addColorStop(0, "rgba(120,80,180,0.35)");
   hg.addColorStop(1, "rgba(120,80,180,0)");
   ctx.fillStyle = hg;
-  ctx.fillRect(0, TH * 0.45, TW, TH * 0.55);
+  ctx.fillRect(0, H * 0.5, W, H * 0.5);
 
-  // stars (upper region only), pixel squares
+  // stars, upper region, pixel squares
   const rng = makeRng(7);
-  for (let i = 0; i < 220; i++) {
-    const x = Math.floor(rng() * TW);
-    const y = Math.floor(rng() * TH * 0.6);
+  for (let i = 0; i < 260; i++) {
+    const x = Math.floor(rng() * W);
+    const y = Math.floor(rng() * H * 0.7);
     const b = 0.3 + rng() * 0.7;
     ctx.fillStyle = `rgba(255,255,255,${b.toFixed(2)})`;
     const s = rng() > 0.9 ? 2 : 1;
@@ -94,44 +78,42 @@ function drawSky(ctx) {
   }
 }
 
-// ---- draw: cloud band near the top (transparent) ---------------------------
-function drawClouds(ctx) {
-  ctx.clearRect(0, 0, TW, TH);
+function drawClouds(ctx, W, H) {
+  ctx.clearRect(0, 0, W, H);
   const rng = makeRng(42);
-  for (let i = 0; i < 26; i++) {
-    const x = rng() * TW * 1.1 - 20;
-    const y = 8 + rng() * 70;
-    const rx = 34 + rng() * 60;
-    const ry = 12 + rng() * 20;
-    ctx.fillStyle = `rgba(40,28,84,${(0.35 + rng() * 0.35).toFixed(2)})`;
+  for (let i = 0; i < 22; i++) {
+    const x = rng() * W * 1.1 - 30;
+    const y = 8 + rng() * H * 0.22;
+    const rx = 30 + rng() * 54;
+    const ry = 10 + rng() * 15;
+    ctx.fillStyle = `rgba(38,26,80,${(0.14 + rng() * 0.16).toFixed(2)})`;
     ctx.beginPath();
     ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = `rgba(70,50,120,${(0.18 + rng() * 0.18).toFixed(2)})`;
+    ctx.fillStyle = `rgba(70,50,120,${(0.08 + rng() * 0.1).toFixed(2)})`;
     ctx.beginPath();
     ctx.ellipse(x, y - ry * 0.5, rx * 0.7, ry * 0.6, 0, 0, Math.PI * 2);
     ctx.fill();
   }
 }
 
-// ---- draw: a row of buildings across the width -----------------------------
-function drawSkyline(ctx, cfg) {
-  const { baseY, minH, maxH, body, side, top, litProb, dim, seed } = cfg;
+// buildings anchored to the BOTTOM of the texture (baseY = H). Heights are
+// fractions of H so the plane height alone controls on-screen size.
+function drawSkyline(ctx, W, H, cfg) {
+  const { minH, maxH, body, side, top, litProb, dim, seed } = cfg;
   const rng = makeRng(seed);
-  let x = -12;
-  while (x < TW + 12) {
-    const w = 16 + Math.floor(rng() * 26);
-    const h = minH + Math.floor(rng() * (maxH - minH));
-    const y = baseY - h;
-    // body + top edge + right shade (subtle 3D)
+  let x = -14;
+  while (x < W + 14) {
+    const w = 14 + Math.floor(rng() * 22);
+    const h = Math.floor((minH + rng() * (maxH - minH)) * H);
+    const y = H - h;
     ctx.fillStyle = body;
-    ctx.fillRect(x, y, w, baseY - y);
+    ctx.fillRect(x, y, w, h);
     ctx.fillStyle = top;
     ctx.fillRect(x, y, w, 2);
     ctx.fillStyle = side;
-    ctx.fillRect(x + w - 3, y, 3, baseY - y);
-    // windows
-    for (let wy = y + 5; wy < baseY - 3; wy += 6) {
+    ctx.fillRect(x + w - 3, y, 3, h);
+    for (let wy = y + 6; wy < H - 4; wy += 7) {
       for (let wx = x + 3; wx < x + w - 4; wx += 5) {
         if (rng() < litProb) win(ctx, wx, wy, 2, 3, pick(rng, NEON));
         else {
@@ -146,55 +128,52 @@ function drawSkyline(ctx, cfg) {
   }
 }
 
-// ---- KL landmarks (drawn into the mid layer) -------------------------------
+// ---- KL landmarks (drawn into the mid layer, anchored at baseY = H) --------
 const LM = { body: "#1b2146", side: "#10132e", top: "#2f3a6c", ring: "#22d3ee" };
 
 function petronasTower(ctx, cx, baseY) {
-  const bodyTop = baseY - 96, t2 = baseY - 122, t3 = baseY - 140, coneTop = baseY - 152, spireTop = baseY - 168;
+  const bodyTop = baseY - 190, t2 = baseY - 236, t3 = baseY - 268, coneTop = baseY - 292, spireTop = baseY - 322;
   const draw = (w, yTop) => {
     ctx.fillStyle = LM.body;
     ctx.fillRect(cx - w / 2, yTop, w, baseY - yTop);
     ctx.fillStyle = LM.side;
-    ctx.fillRect(cx + w / 2 - 2, yTop, 2, baseY - yTop);
+    ctx.fillRect(cx + w / 2 - 3, yTop, 3, baseY - yTop);
     ctx.fillStyle = LM.top;
     ctx.fillRect(cx - w / 2, yTop, w, 2);
   };
-  draw(22, bodyTop);
-  draw(16, t2);
-  draw(11, t3);
-  // cone + spire + ember
+  draw(30, bodyTop);
+  draw(22, t2);
+  draw(15, t3);
   ctx.fillStyle = LM.top;
   ctx.beginPath();
-  ctx.moveTo(cx - 5, t3);
-  ctx.lineTo(cx + 5, t3);
-  ctx.lineTo(cx + 1.5, coneTop);
-  ctx.lineTo(cx - 1.5, coneTop);
+  ctx.moveTo(cx - 7, t3);
+  ctx.lineTo(cx + 7, t3);
+  ctx.lineTo(cx + 2, coneTop);
+  ctx.lineTo(cx - 2, coneTop);
   ctx.fill();
   ctx.fillStyle = "#3a4270";
-  ctx.fillRect(cx - 1, spireTop, 2, coneTop - spireTop);
+  ctx.fillRect(cx - 1.5, spireTop, 3, coneTop - spireTop);
   ctx.fillStyle = "#ffb347";
-  ctx.fillRect(cx - 1.5, spireTop - 2, 3, 3);
-  // setback rings + windows
+  ctx.fillRect(cx - 2, spireTop - 3, 4, 4);
   ctx.fillStyle = LM.ring;
   ctx.globalAlpha = 0.7;
-  ctx.fillRect(cx - 11, bodyTop, 22, 1.5);
-  ctx.fillRect(cx - 8, t2, 16, 1.5);
+  ctx.fillRect(cx - 15, bodyTop, 30, 2);
+  ctx.fillRect(cx - 11, t2, 22, 2);
   ctx.globalAlpha = 1;
   const rng = makeRng(cx * 3 + 1);
-  for (let wy = bodyTop + 5; wy < baseY - 4; wy += 6)
-    for (let c = -1; c <= 1; c++) if (rng() < 0.6) win(ctx, cx + c * 6 - 1, wy, 2, 3, "#bfe9ff");
+  for (let wy = bodyTop + 7; wy < baseY - 5; wy += 8)
+    for (let c = -1; c <= 1; c++) if (rng() < 0.6) win(ctx, cx + c * 8 - 1, wy, 2, 4, "#bfe9ff");
 }
 function drawPetronas(ctx, cx, baseY) {
-  petronasTower(ctx, cx - 15, baseY);
-  petronasTower(ctx, cx + 15, baseY);
-  // skybridge
+  petronasTower(ctx, cx - 20, baseY);
+  petronasTower(ctx, cx + 20, baseY);
   ctx.fillStyle = LM.top;
-  ctx.fillRect(cx - 15, baseY - 74, 30, 2);
-  ctx.fillRect(cx - 15, baseY - 69, 30, 2);
+  ctx.fillRect(cx - 20, baseY - 146, 40, 3);
+  ctx.fillRect(cx - 20, baseY - 138, 40, 3);
 }
 
 function drawMerdeka(ctx, cx, baseY) {
-  const shaftTop = baseY - 152, spireTop = baseY - 190, wb = 26, wt = 8;
+  const shaftTop = baseY - 300, spireTop = baseY - 348, wb = 34, wt = 10;
   ctx.fillStyle = LM.body;
   ctx.beginPath();
   ctx.moveTo(cx - wb / 2, baseY);
@@ -204,130 +183,125 @@ function drawMerdeka(ctx, cx, baseY) {
   ctx.fill();
   ctx.fillStyle = LM.side;
   ctx.beginPath();
-  ctx.moveTo(cx + wb / 2 - 3, baseY);
+  ctx.moveTo(cx + wb / 2 - 4, baseY);
   ctx.lineTo(cx + wb / 2, baseY);
   ctx.lineTo(cx + wt / 2, shaftTop);
-  ctx.lineTo(cx + wt / 2 - 2, shaftTop);
+  ctx.lineTo(cx + wt / 2 - 3, shaftTop);
   ctx.fill();
-  // crown spire + ember
   ctx.fillStyle = LM.top;
   ctx.beginPath();
   ctx.moveTo(cx - wt / 2, shaftTop);
   ctx.lineTo(cx + wt / 2, shaftTop);
-  ctx.lineTo(cx + 1.5, spireTop);
-  ctx.lineTo(cx - 1.5, spireTop);
+  ctx.lineTo(cx + 2, spireTop);
+  ctx.lineTo(cx - 2, spireTop);
   ctx.fill();
   ctx.fillStyle = "#3a4270";
-  ctx.fillRect(cx - 1, spireTop - 12, 2, 12);
+  ctx.fillRect(cx - 1.5, spireTop - 16, 3, 16);
   ctx.fillStyle = "#ff5a5a";
-  ctx.fillRect(cx - 1.5, spireTop - 14, 3, 3);
-  // faceted window columns
+  ctx.fillRect(cx - 2, spireTop - 19, 4, 4);
   const rng = makeRng(455);
-  for (let wy = shaftTop + 8; wy < baseY - 4; wy += 6) {
+  for (let wy = shaftTop + 10; wy < baseY - 5; wy += 8) {
     const frac = (baseY - wy) / (baseY - shaftTop);
-    const half = (wb - (wb - wt) * frac) / 2 - 3;
-    for (let wx = cx - half; wx <= cx + half; wx += 5)
-      if (rng() < 0.5) win(ctx, wx, wy, 2, 3, rng() > 0.5 ? "#8be9fd" : "#ffcf6b");
+    const half = (wb - (wb - wt) * frac) / 2 - 4;
+    for (let wx = cx - half; wx <= cx + half; wx += 6)
+      if (rng() < 0.5) win(ctx, wx, wy, 2, 4, rng() > 0.5 ? "#8be9fd" : "#ffcf6b");
   }
 }
 
 function drawKLTower(ctx, cx, baseY) {
-  const podY = baseY - 96, antTop = baseY - 138;
+  const podY = baseY - 190, antTop = baseY - 268;
   ctx.fillStyle = LM.body;
   ctx.beginPath();
-  ctx.moveTo(cx - 5, baseY);
-  ctx.lineTo(cx + 5, baseY);
-  ctx.lineTo(cx + 3, podY);
-  ctx.lineTo(cx - 3, podY);
+  ctx.moveTo(cx - 7, baseY);
+  ctx.lineTo(cx + 7, baseY);
+  ctx.lineTo(cx + 4, podY);
+  ctx.lineTo(cx - 4, podY);
   ctx.fill();
   ctx.fillStyle = LM.side;
-  ctx.fillRect(cx + 1, podY, 2, baseY - podY);
-  // bulb pod
+  ctx.fillRect(cx + 1, podY, 3, baseY - podY);
   ctx.fillStyle = LM.body;
   ctx.beginPath();
-  ctx.ellipse(cx, podY - 6, 9, 8, 0, 0, Math.PI * 2);
+  ctx.ellipse(cx, podY - 8, 12, 10, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.fillStyle = LM.top;
   ctx.beginPath();
-  ctx.moveTo(cx - 9, podY - 8);
-  ctx.quadraticCurveTo(cx, podY - 22, cx + 9, podY - 8);
+  ctx.moveTo(cx - 12, podY - 10);
+  ctx.quadraticCurveTo(cx, podY - 30, cx + 12, podY - 10);
   ctx.fill();
-  // pod lit bands
   ctx.fillStyle = "#ffcf6b";
   ctx.globalAlpha = 0.85;
-  ctx.fillRect(cx - 8, podY - 8, 16, 1.5);
+  ctx.fillRect(cx - 11, podY - 10, 22, 2);
   ctx.fillStyle = "#22d3ee";
-  ctx.fillRect(cx - 6, podY - 3, 12, 1.5);
+  ctx.fillRect(cx - 8, podY - 4, 16, 2);
   ctx.globalAlpha = 1;
-  // antenna + ember
   ctx.fillStyle = "#3a4270";
-  ctx.fillRect(cx - 1, antTop, 2, podY - 14 - antTop);
+  ctx.fillRect(cx - 1.5, antTop, 3, podY - 18 - antTop);
   ctx.fillStyle = "#ff5a5a";
-  ctx.fillRect(cx - 1.5, antTop - 2, 3, 3);
+  ctx.fillRect(cx - 2, antTop - 3, 4, 4);
 }
 
-function drawMid(ctx) {
-  ctx.clearRect(0, 0, TW, TH);
-  const baseY = 202;
-  drawSkyline(ctx, { baseY, minH: 30, maxH: 96, body: "#191636", side: "#0f0d24", top: "#2a2650", litProb: 0.5, dim: 0.35, seed: 88 });
-  drawMerdeka(ctx, 232, baseY);
-  drawPetronas(ctx, 128, baseY);
-  drawKLTower(ctx, 312, baseY);
+function drawMid(ctx, W, H) {
+  ctx.clearRect(0, 0, W, H);
+  drawSkyline(ctx, W, H, { minH: 0.18, maxH: 0.52, body: "#191636", side: "#0f0d24", top: "#2a2650", litProb: 0.5, dim: 0.35, seed: 88 });
+  drawMerdeka(ctx, W * 0.5, H);
+  drawPetronas(ctx, W * 0.2, H);
+  drawKLTower(ctx, W * 0.7, H);
+}
+function drawFar(ctx, W, H) {
+  ctx.clearRect(0, 0, W, H);
+  drawSkyline(ctx, W, H, { minH: 0.12, maxH: 0.34, body: "#241f47", side: "#1a1638", top: "#34406a", litProb: 0.22, dim: 0.25, seed: 21 });
+}
+function drawNear(ctx, W, H) {
+  ctx.clearRect(0, 0, W, H);
+  drawSkyline(ctx, W, H, { minH: 0.22, maxH: 0.6, body: "#100d24", side: "#08060f", top: "#1c1838", litProb: 0.4, dim: 0.3, seed: 303 });
 }
 
-function drawFar(ctx) {
-  ctx.clearRect(0, 0, TW, TH);
-  drawSkyline(ctx, { baseY: 176, minH: 20, maxH: 64, body: "#241f47", side: "#1a1638", top: "#34406a", litProb: 0.22, dim: 0.25, seed: 21 });
-}
-
-function drawNear(ctx) {
-  ctx.clearRect(0, 0, TW, TH);
-  drawSkyline(ctx, { baseY: 226, minH: 40, maxH: 110, body: "#100d24", side: "#08060f", top: "#1c1838", litProb: 0.4, dim: 0.3, seed: 303 });
-}
-
-// ---- foreground: rooftop + ledge + neon sign + AC units --------------------
-function drawForeground(ctx) {
-  ctx.clearRect(0, 0, TW, TH);
-  const roofY = 232;
-  // rooftop slab
+// ---- balcony strip: slab + railing + neon sign + AC units ------------------
+const BH = 260; // balcony texture height; plane spans viewport 0.80..1.06
+function drawBalcony(ctx, W, H) {
+  ctx.clearRect(0, 0, W, H);
+  const slabY = Math.round(H * 0.31); // = ROOF line within this strip
   ctx.fillStyle = "#08060f";
-  ctx.fillRect(0, roofY, TW, TH - roofY);
+  ctx.fillRect(0, slabY, W, H - slabY);
   ctx.fillStyle = "#171430";
-  ctx.fillRect(0, roofY, TW, 2);
-  // low ledge / railing posts across the front
-  ctx.fillStyle = "#0c0a1c";
-  ctx.fillRect(0, roofY + 10, TW, 4);
-  for (let x = 4; x < TW; x += 12) {
+  ctx.fillRect(0, slabY, W, 3);
+  // railing
+  for (let x = 4; x < W; x += 16) {
     ctx.fillStyle = "#141130";
-    ctx.fillRect(x, roofY - 6, 3, 16);
+    ctx.fillRect(x, slabY - 18, 4, 22);
     ctx.fillStyle = "#221e44";
-    ctx.fillRect(x, roofY - 6, 1, 16);
+    ctx.fillRect(x, slabY - 18, 1.5, 22);
   }
   ctx.fillStyle = "#0a0818";
-  ctx.fillRect(0, roofY - 6, TW, 3);
+  ctx.fillRect(0, slabY - 18, W, 4);
+  ctx.fillStyle = "#0c0a1c";
+  ctx.fillRect(0, slabY + 14, W, 5);
 
-  // AC units on the far right
+  // AC units, right
   ctx.fillStyle = "#14122a";
   for (let i = 0; i < 2; i++) {
-    const bx = 420 + i * 30;
-    ctx.fillRect(bx, roofY - 14, 24, 14);
+    const bx = W - 150 + i * 42;
+    ctx.fillRect(bx, slabY - 22, 34, 22);
     ctx.strokeStyle = "#2a2650";
     ctx.lineWidth = 1;
-    ctx.strokeRect(bx + 3, roofY - 11, 18, 8);
+    ctx.strokeRect(bx + 4, slabY - 17, 26, 12);
   }
 
-  // neon sign box on the left
-  const sx = 30, sy = 150, sw = 120, sh = 60;
+  // neon billboard, left (stands on the slab, rises above the roofline).
+  // sx is kept right of the 1.4× overscan margin (u≈0.143) so it stays on-screen.
+  const sx = 118, sw = 150, sTop = 30, sBot = slabY - 2;
   ctx.fillStyle = "#0c0a18";
-  ctx.fillRect(sx, sy, sw, sh);
+  ctx.fillRect(sx, sTop, sw, sBot - sTop);
   ctx.fillStyle = "#1a1730";
-  ctx.fillRect(sx, sy, sw, 2);
+  ctx.fillRect(sx, sTop, sw, 3);
+  ctx.fillStyle = "#0a0818";
+  ctx.fillRect(sx + sw / 2 - 3, sBot, 6, H - sBot); // post
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  const glow = (text, x, y, font, color) => {
-    ctx.font = font;
+  const glow = (text, x, y, color) => {
+    ctx.font = "bold 24px 'Space Grotesk', sans-serif";
     ctx.shadowColor = color;
-    ctx.shadowBlur = 8;
+    ctx.shadowBlur = 12;
     ctx.fillStyle = color;
     ctx.fillText(text, x, y);
     ctx.fillText(text, x, y);
@@ -335,72 +309,153 @@ function drawForeground(ctx) {
     ctx.fillStyle = "#f4faff";
     ctx.fillText(text, x, y);
   };
-  glow("JINN", sx + sw / 2, sy + 22, "bold 20px 'Space Grotesk', sans-serif", "#22d3ee");
-  glow("YIP.", sx + sw / 2, sy + 44, "bold 20px 'Space Grotesk', sans-serif", "#ff5aa8");
+  glow("JINN", sx + sw / 2, sTop + (sBot - sTop) * 0.34, "#22d3ee");
+  glow("YIP.", sx + sw / 2, sTop + (sBot - sTop) * 0.7, "#ff5aa8");
 }
 
-// ---- the lady, smoking, facing left ----------------------------------------
-const LADY_W = 120, LADY_H = 210;
+// ---- the lady, smoking, facing left (detailed feminine silhouette) ---------
+const LADY_W = 160, LADY_H = 320;
+const MOUTH_U = 0.30, MOUTH_V = 0.17; // cigarette anchor in sprite UV
 function drawLady() {
   const c = document.createElement("canvas");
   c.width = LADY_W;
   c.height = LADY_H;
   const ctx = c.getContext("2d");
-  const S = "#050409"; // silhouette
-  ctx.fillStyle = S;
-  // long coat / dress (flared at hem), facing left
+  const B = "#050409";
+  ctx.fillStyle = B;
+
+  // long dress / gown — cinched waist, A-line flare (hourglass silhouette)
   ctx.beginPath();
-  ctx.moveTo(46, LADY_H);
-  ctx.bezierCurveTo(34, 150, 44, 96, 58, 60);
-  ctx.bezierCurveTo(62, 50, 78, 50, 82, 62);
-  ctx.bezierCurveTo(94, 100, 98, 152, 88, LADY_H);
+  ctx.moveTo(56, 300);
+  ctx.quadraticCurveTo(58, 232, 66, 168); // left hip/skirt
+  ctx.quadraticCurveTo(56, 142, 65, 118); // waist pinch (left)
+  ctx.quadraticCurveTo(60, 98, 71, 86);   // bust → shoulder (left)
+  ctx.lineTo(85, 86);                      // shoulder line
+  ctx.quadraticCurveTo(93, 100, 90, 120);  // right shoulder → waist
+  ctx.quadraticCurveTo(97, 144, 95, 168);  // right hip
+  ctx.quadraticCurveTo(101, 232, 98, 300); // skirt hem (right)
   ctx.closePath();
   ctx.fill();
-  // head
+
+  // slender lower legs + heels below the hem
+  ctx.fillRect(66, 296, 8, 20);
+  ctx.fillRect(84, 296, 8, 20);
   ctx.beginPath();
-  ctx.arc(62, 44, 13, 0, Math.PI * 2);
+  ctx.moveTo(60, 316);
+  ctx.lineTo(74, 314);
+  ctx.lineTo(74, 318);
+  ctx.lineTo(62, 320);
   ctx.fill();
-  // hair falling down the back (right side, since she faces left)
   ctx.beginPath();
-  ctx.moveTo(70, 34);
-  ctx.bezierCurveTo(84, 44, 84, 90, 74, 116);
-  ctx.lineTo(64, 112);
-  ctx.bezierCurveTo(72, 84, 70, 52, 62, 36);
+  ctx.moveTo(84, 314);
+  ctx.lineTo(96, 316);
+  ctx.lineTo(94, 320);
+  ctx.lineTo(84, 318);
+  ctx.fill();
+
+  // neck + head (facing left, small nose profile)
+  ctx.fillRect(72, 72, 8, 16);
+  ctx.beginPath();
+  ctx.arc(75, 54, 15, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(61, 50);
+  ctx.lineTo(56, 54);
+  ctx.lineTo(61, 58);
+  ctx.fill();
+
+  // long flowing hair down the back (right side)
+  ctx.beginPath();
+  ctx.moveTo(82, 42);
+  ctx.bezierCurveTo(104, 54, 102, 132, 88, 192);
+  ctx.lineTo(74, 186);
+  ctx.bezierCurveTo(88, 132, 86, 66, 73, 44);
   ctx.closePath();
   ctx.fill();
-  // near arm bent up to the mouth (cigarette hand)
-  ctx.lineWidth = 8;
-  ctx.strokeStyle = S;
+  ctx.beginPath();
+  ctx.arc(75, 48, 17, Math.PI * 1.02, Math.PI * 2.0);
+  ctx.fill();
+
+  // arms: near arm bent to the mouth, far hand resting on the hip
+  ctx.strokeStyle = B;
   ctx.lineCap = "round";
+  ctx.lineWidth = 9;
   ctx.beginPath();
-  ctx.moveTo(60, 78);
-  ctx.lineTo(48, 66);
-  ctx.lineTo(52, 50);
+  ctx.moveTo(73, 100);
+  ctx.lineTo(58, 126);
+  ctx.lineTo(60, 60);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(87, 100);
+  ctx.lineTo(99, 126);
+  ctx.lineTo(91, 150);
   ctx.stroke();
 
-  // rim light on the left edge (city/moon glow)
-  ctx.strokeStyle = "rgba(140,180,255,0.5)";
-  ctx.lineWidth = 1.5;
+  // cool moon/city rim light on the left contour
+  ctx.strokeStyle = "rgba(150,195,255,0.55)";
+  ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.moveTo(50, 56);
-  ctx.bezierCurveTo(40, 96, 34, 150, 46, LADY_H);
+  ctx.moveTo(56, 300);
+  ctx.quadraticCurveTo(58, 232, 66, 168);
+  ctx.quadraticCurveTo(56, 142, 65, 118);
+  ctx.quadraticCurveTo(60, 98, 71, 86);
   ctx.stroke();
-  ctx.fillStyle = "rgba(150,200,255,0.4)";
   ctx.beginPath();
-  ctx.arc(51, 42, 12, Math.PI * 0.6, Math.PI * 1.35);
+  ctx.arc(75, 54, 15, Math.PI * 0.55, Math.PI * 1.45);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(58, 126);
+  ctx.lineTo(60, 60);
   ctx.stroke();
 
-  // cigarette + ember at the mouth
-  ctx.fillStyle = "#d8d8e0";
-  ctx.fillRect(44, 49, 6, 2);
+  // cigarette + ember at the lips
+  ctx.fillStyle = "#e8e8f0";
+  ctx.fillRect(49, 54, 8, 2);
   ctx.fillStyle = "#ff8a3d";
-  ctx.fillRect(42, 49, 2, 2);
+  ctx.fillRect(46, 54, 3, 2);
 
   const tex = new THREE.CanvasTexture(c);
   tex.magFilter = THREE.NearestFilter;
   tex.minFilter = THREE.NearestFilter;
   tex.colorSpace = THREE.SRGBColorSpace;
   return tex;
+}
+
+function moonTexture() {
+  const S = 160;
+  const c = document.createElement("canvas");
+  c.width = c.height = S;
+  const ctx = c.getContext("2d");
+  const cx = S / 2, cy = S / 2, r = S * 0.26;
+  // soft glow
+  const gg = ctx.createRadialGradient(cx, cy, r * 0.6, cx, cy, S * 0.5);
+  gg.addColorStop(0, "rgba(253,251,232,0.45)");
+  gg.addColorStop(1, "rgba(253,251,232,0)");
+  ctx.fillStyle = gg;
+  ctx.fillRect(0, 0, S, S);
+  // disc
+  ctx.fillStyle = "#fdfbe8";
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.fill();
+  // craters
+  ctx.fillStyle = "#e6e1c6";
+  [[-0.35, -0.2, 0.22], [0.3, 0.15, 0.16], [0.1, -0.42, 0.12], [-0.1, 0.36, 0.13]].forEach(([dx, dy, rr]) => {
+    ctx.beginPath();
+    ctx.arc(cx + dx * r, cy + dy * r, rr * r, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  return new THREE.CanvasTexture(c);
+}
+
+function Moon({ x, y, size }) {
+  const tex = useMemo(() => moonTexture(), []);
+  return (
+    <mesh position={[x, y, 0]} renderOrder={1}>
+      <planeGeometry args={[size, size]} />
+      <meshBasicMaterial map={tex} transparent depthTest={false} depthWrite={false} toneMapped={false} />
+    </mesh>
+  );
 }
 
 function puffTexture() {
@@ -417,36 +472,25 @@ function puffTexture() {
 
 // ============================================================================
 
-function coverSize(vw, vh, over = 1.25) {
-  const ta = TW / TH;
-  let w = vh * ta, h = vh;
-  if (w < vw) {
-    w = vw;
-    h = vw / ta;
-  }
-  return { w: w * over, h: h * over };
-}
+const flatMat = (tex) => ({ map: tex, transparent: true, depthTest: false, depthWrite: false, toneMapped: false });
 
-const flatMat = (tex) => ({
-  map: tex,
-  transparent: true,
-  depthTest: false,
-  depthWrite: false,
-  toneMapped: false,
-});
-
-// a single full-screen parallax plane
-function Layer({ tex, w, h, order, factor, drift = 0, scroll }) {
+// Full-width parallax band anchored between two viewport fractions (from top).
+function Band({ tex, topFrac, botFrac, order, factor, drift = 0, scroll }) {
   const ref = useRef(null);
+  const { viewport } = useThree();
+  const vw = viewport.width, vh = viewport.height;
+  const w = vw * 1.4;
+  const top = vh * 0.5 - topFrac * vh;
+  const bot = vh * 0.5 - botFrac * vh;
+  const h = top - bot;
+  const cy = (top + bot) / 2;
   useFrame((state) => {
     const g = ref.current;
     if (!g) return;
-    const p = scroll.current;
-    const amp = h * 0.08;
-    const px = state.pointer.x, py = state.pointer.y;
-    g.position.y = p * amp * factor + py * h * 0.012 * factor;
-    let x = px * w * 0.012 * factor;
-    if (drift) x += ((state.clock.elapsedTime * drift) % (w * 0.4)) - w * 0.2;
+    const amp = vh * 0.06;
+    g.position.y = cy + scroll.current * amp * factor + state.pointer.y * vh * 0.01 * factor;
+    let x = state.pointer.x * vw * 0.012 * factor;
+    if (drift) x += ((state.clock.elapsedTime * drift) % (w * 0.3)) - w * 0.15;
     g.position.x = x;
   });
   return (
@@ -461,7 +505,7 @@ function Smoke({ origin, size }) {
   const tex = useMemo(() => puffTexture(), []);
   const N = 14;
   const parts = useMemo(
-    () => Array.from({ length: N }, (_, i) => ({ phase: i / N, speed: 0.12 + (i % 5) * 0.02, sway: 6 + (i % 4) * 3 })),
+    () => Array.from({ length: N }, (_, i) => ({ phase: i / N, speed: 0.11 + (i % 5) * 0.02 })),
     []
   );
   const refs = useRef([]);
@@ -471,15 +515,14 @@ function Smoke({ origin, size }) {
       const m = refs.current[i];
       if (!m) return;
       const life = (t * pt.speed + pt.phase) % 1;
-      const rise = size * 1.4;
       m.position.set(
-        origin[0] - life * size * 0.25 + Math.sin(life * 6 + i) * size * 0.03 * pt.sway * 0.1,
-        origin[1] + life * rise,
+        origin[0] - life * size * 0.2 + Math.sin(life * 6 + i) * size * 0.04,
+        origin[1] + life * size * 1.15,
         1
       );
-      const sc = size * (0.05 + life * 0.22);
+      const sc = size * (0.05 + life * 0.24);
       m.scale.set(sc, sc, 1);
-      m.material.opacity = Math.sin(life * Math.PI) * 0.28;
+      m.material.opacity = Math.sin(life * Math.PI) * 0.26;
     });
   });
   return (
@@ -514,49 +557,48 @@ function Ember({ pos, size }) {
 
 function Scene({ scroll }) {
   const { viewport } = useThree();
-  const { w, h } = coverSize(viewport.width, viewport.height);
+  const vw = viewport.width, vh = viewport.height;
 
   const tex = useMemo(
     () => ({
-      sky: makeTex(drawSky),
-      clouds: makeTex(drawClouds),
-      far: makeTex(drawFar),
-      mid: makeTex(drawMid),
-      near: makeTex(drawNear),
-      fg: makeTex(drawForeground),
+      sky: makeTex(TW, TH, drawSky),
+      clouds: makeTex(TW, TH, drawClouds),
+      far: makeTex(TW, TH, drawFar),
+      mid: makeTex(TW, TH, drawMid),
+      near: makeTex(TW, TH, drawNear),
+      balcony: makeTex(TW, BH, drawBalcony),
       lady: drawLady(),
     }),
     []
   );
 
-  // lady placement: standing on the rooftop line, right side, facing left.
-  // X is anchored to the *visible viewport* (not the overscanned cover) so she
-  // never clips off-screen.
-  const roofTopY = -h / 2 + h * (1 - 232 / TH); // world-Y of rooftop top edge
-  const ladyH = h * 0.28;
+  // lady: stands on the roofline, right side, facing left
+  const roofY = vh * 0.5 - ROOF * vh;
+  const ladyH = vh * 0.33;
   const ladyW = ladyH * (LADY_W / LADY_H);
-  const ladyX = viewport.width * 0.32;
-  const ladyY = roofTopY + ladyH / 2 - h * 0.01;
-  // mouth / cigarette anchor (sprite faces left → mouth toward left)
-  const mouthX = ladyX - ladyW * 0.14;
-  const mouthY = ladyY + ladyH * 0.24;
+  const ladyX = vw * 0.37;
+  const ladyY = roofY + ladyH / 2;
+  const mouthX = ladyX + (MOUTH_U - 0.5) * ladyW;
+  const mouthY = ladyY + (0.5 - MOUTH_V) * ladyH;
 
   return (
     <>
       <color attach="background" args={[SKY.top]} />
-      <Layer tex={tex.sky} w={w} h={h} order={0} factor={0.15} scroll={scroll} />
-      <Layer tex={tex.clouds} w={w} h={h} order={1} factor={0.3} drift={6} scroll={scroll} />
-      <Layer tex={tex.far} w={w} h={h} order={2} factor={0.5} scroll={scroll} />
-      <Layer tex={tex.mid} w={w} h={h} order={3} factor={0.8} scroll={scroll} />
-      <Layer tex={tex.near} w={w} h={h} order={4} factor={1.1} scroll={scroll} />
-      <Layer tex={tex.fg} w={w} h={h} order={5} factor={1.35} scroll={scroll} />
+      {/* sky ~top 40%, city ~50%, balcony ~bottom 10% */}
+      <Band tex={tex.sky} topFrac={-0.05} botFrac={1.05} order={0} factor={0.1} scroll={scroll} />
+      <Moon x={vw * 0.33} y={vh * 0.28} size={vh * 0.2} />
+      <Band tex={tex.clouds} topFrac={-0.05} botFrac={1.05} order={1} factor={0.25} drift={7} scroll={scroll} />
+      <Band tex={tex.far} topFrac={ROOF - 0.44} botFrac={ROOF} order={2} factor={0.45} scroll={scroll} />
+      <Band tex={tex.mid} topFrac={ROOF - 0.5} botFrac={ROOF} order={3} factor={0.75} scroll={scroll} />
+      <Band tex={tex.near} topFrac={ROOF - 0.5} botFrac={ROOF} order={4} factor={1.0} scroll={scroll} />
+      <Band tex={tex.balcony} topFrac={0.8} botFrac={1.06} order={5} factor={1.3} scroll={scroll} />
 
       <mesh position={[ladyX, ladyY, 0]} renderOrder={20}>
         <planeGeometry args={[ladyW, ladyH]} />
         <meshBasicMaterial {...flatMat(tex.lady)} />
       </mesh>
-      <Ember pos={[mouthX - ladyW * 0.1, mouthY]} size={ladyH} />
-      <Smoke origin={[mouthX - ladyW * 0.1, mouthY]} size={ladyH} />
+      <Ember pos={[mouthX - ladyW * 0.03, mouthY]} size={ladyH} />
+      <Smoke origin={[mouthX - ladyW * 0.03, mouthY]} size={ladyH} />
     </>
   );
 }

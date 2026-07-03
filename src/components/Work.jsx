@@ -22,13 +22,14 @@ export default function Work() {
   return (
     <section id="work" className="section work">
       <div className="container">
+        <div className="plate wide reveal">
         <div className="work-head">
-          <div className="reveal plate">
+          <div>
             <p className="eyebrow">Portfolio</p>
             <h2 className="section-title">Featured Work</h2>
           </div>
 
-          <div className="filters reveal">
+          <div className="filters">
             <button
               className={`filter${filter === "all" ? " active" : ""}`}
               onClick={() => setFilter("all")}
@@ -60,6 +61,7 @@ export default function Work() {
           {visible.length === 0 && (
             <p className="empty">No videos in this category yet.</p>
           )}
+        </div>
         </div>
       </div>
 
