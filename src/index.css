@@ -144,6 +144,17 @@ img, video { display: block; max-width: 100%; }
 .star { position: absolute; border-radius: 50%; background: #fff; animation: twinkle var(--dur) ease-in-out infinite alternate; }
 @keyframes twinkle { from { opacity: 0.15; } to { opacity: 1; } }
 
+/* ---- city glow (KLCC night haze behind the skyline) ---- */
+.glow {
+  bottom: 6vh; left: 0; width: 100%; height: 56vh;
+  background:
+    radial-gradient(55% 100% at 62% 100%, rgba(90, 150, 210, 0.20), transparent 70%),
+    radial-gradient(42% 90% at 46% 100%, rgba(190, 120, 80, 0.14), transparent 70%),
+    radial-gradient(30% 80% at 84% 100%, rgba(150, 90, 190, 0.16), transparent 72%);
+  transform: translateY(calc(var(--p) * -20vh));
+  pointer-events: none;
+}
+
 /* ---- MID: neon city (rises at a medium rate + slight zoom) ---- */
 .bg-scene .city {
   bottom: 4vh; height: 82vh; /* tall enough to show the landmark towers */
@@ -240,14 +251,14 @@ img, video { display: block; max-width: 100%; }
 
 .scroll-hint {
   position: absolute; bottom: 26px; left: 50%; transform: translateX(-50%);
-  z-index: 2; color: var(--text-muted); font-size: 0.75rem; letter-spacing: 0.2em; text-transform: uppercase;
-  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  z-index: 2; color: var(--text-muted); font-size: 0.95rem; letter-spacing: 0.24em; text-transform: uppercase;
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
   opacity: calc(1 - var(--p) * 6); /* fades out shortly after scrolling begins */
   pointer-events: none;
 }
-.scroll-hint .mouse { width: 22px; height: 34px; border: 1px solid var(--text-muted); border-radius: 12px; position: relative; }
-.scroll-hint .mouse::after { content: ""; position: absolute; top: 6px; left: 50%; width: 3px; height: 6px; background: var(--cyan); border-radius: 2px; transform: translateX(-50%); animation: wheel 1.6s infinite; }
-@keyframes wheel { 0% { opacity: 1; top: 6px; } 100% { opacity: 0; top: 16px; } }
+.scroll-hint .mouse { width: 34px; height: 54px; border: 2px solid var(--text-muted); border-radius: 18px; position: relative; }
+.scroll-hint .mouse::after { content: ""; position: absolute; top: 10px; left: 50%; width: 4px; height: 9px; background: var(--cyan); border-radius: 2px; transform: translateX(-50%); animation: wheel 1.6s infinite; }
+@keyframes wheel { 0% { opacity: 1; top: 10px; } 100% { opacity: 0; top: 26px; } }
 
 /* Content sits above the fixed scene; translucent panels let it show through */
 .section { z-index: 1; }
@@ -365,11 +376,12 @@ img, video { display: block; max-width: 100%; }
   -webkit-backdrop-filter: blur(7px);
   text-align: center;
   /* fill the viewport so scrolling here pushes the ABOUT content off the top —
-     only the background + contact remain in view */
+     only the background + contact remain in view. Content sits in the lower
+     half so the final view is ~50% background (top) / 50% contact (bottom). */
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-end;
 }
 .contact h2 { font-size: clamp(2rem, 6vw, 4rem); font-weight: 700; margin-bottom: 18px; }
 .contact p { color: var(--text-muted); max-width: 520px; margin: 0 auto 30px; }

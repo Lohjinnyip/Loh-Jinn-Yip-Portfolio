@@ -247,15 +247,17 @@ export default function CityBackground() {
       <div className="layer cloud cloud-2" />
       <div className="layer moon" />
       <Stars />
+      {/* soft KLCC-style city glow behind the skyline */}
+      <div className="layer glow" />
 
       {/* Kuala Lumpur skyline */}
       <svg className="layer city" viewBox={`0 0 1440 ${GROUND}`} preserveAspectRatio="xMidYMax slice">
         <g opacity="0.9">
           {scene.far.map((b, i) => <Building key={`f${i}`} {...b} />)}
         </g>
-        <KLTower cx={1120} groundY={GROUND} />
-        <Merdeka cx={600} groundY={GROUND} />
-        <Petronas cx={870} groundY={GROUND} />
+        <KLTower cx={1210} groundY={GROUND} />
+        <Merdeka cx={720} groundY={GROUND} />
+        <Petronas cx={980} groundY={GROUND} />
         {scene.near.map((b, i) => <Building key={`n${i}`} {...b} />)}
       </svg>
 
