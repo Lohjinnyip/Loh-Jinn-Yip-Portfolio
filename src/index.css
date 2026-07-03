@@ -301,7 +301,8 @@ img, video { display: block; max-width: 100%; }
   transition: transform 0.18s ease, box-shadow 0.25s ease, background 0.2s ease, border-color 0.2s ease;
 }
 .btn svg { width: 17px; height: 17px; transition: transform 0.2s ease; }
-.btn:hover svg { transform: translateX(3px); }
+.btn .arrow { transition: transform 0.2s ease; }
+.btn:hover .arrow { transform: translateX(3px); }
 .btn-primary { background: var(--btn-grad); color: #06101f; box-shadow: var(--glow-accent); }
 .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 18px 46px -8px rgba(59, 130, 246, 0.7); }
 .btn-ghost { background: var(--glass); color: var(--text); border-color: var(--glass-border); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
@@ -482,13 +483,43 @@ img, video { display: block; max-width: 100%; }
 }
 .contact h2 { font-size: clamp(2rem, 6vw, 4rem); font-weight: 700; margin-bottom: 18px; }
 .contact p { color: var(--text-muted); max-width: 520px; margin: 0 auto 30px; }
-.socials { display: flex; gap: 12px; justify-content: center; margin-top: 34px; flex-wrap: wrap; }
-.socials a {
-  font-size: 0.88rem; color: var(--text-muted);
-  padding: 10px 20px; border: 1px solid var(--glass-border); border-radius: var(--radius-pill);
-  background: var(--glass); transition: color 0.2s ease, border-color 0.2s ease, transform 0.2s ease, background 0.2s ease;
+/* email provider chooser */
+.email-menu { position: relative; }
+.email-pop {
+  position: absolute; top: calc(100% + 10px); left: 50%; transform: translateX(-50%);
+  z-index: 20; min-width: 210px;
+  display: flex; flex-direction: column; gap: 2px;
+  padding: 8px; border-radius: var(--radius);
+  background: rgba(10, 14, 28, 0.92);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  box-shadow: var(--shadow-2);
+  text-align: left;
 }
-.socials a:hover { color: var(--text); border-color: var(--cyan); transform: translateY(-2px); background: var(--glass-2); }
+.email-pop-title {
+  font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--text-muted); margin: 4px 10px 6px;
+}
+.email-pop button {
+  display: block; width: 100%; text-align: left;
+  font-size: 0.9rem; color: var(--text);
+  background: none; border: 0; cursor: pointer;
+  padding: 10px 12px; border-radius: 10px;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.email-pop button:hover { background: var(--glass-2); color: #fff; }
+.email-pop-sep { height: 1px; background: var(--glass-border); margin: 6px 4px; }
+
+.contact-actions {
+  display: flex; gap: 14px; justify-content: center; flex-wrap: wrap;
+  margin-top: 32px;
+}
+/* YouTube button: red accent on hover */
+.contact-actions a:last-child:hover {
+  border-color: rgba(255, 60, 60, 0.6);
+  box-shadow: 0 12px 34px -10px rgba(255, 50, 50, 0.5);
+}
+.contact-actions a:last-child:hover svg { color: #ff4d4d; }
 
 .footer { text-align: center; padding: 30px 0; color: var(--text-muted); font-size: 0.82rem; border-top: 1px solid var(--line); }
 

@@ -35,13 +35,17 @@ function makeRng(seed) {
 }
 const pick = (rng, arr) => arr[Math.floor(rng() * arr.length)];
 
-function makeTex(w, h, draw) {
+// `ss` supersamples the canvas (finer texels → crisper edges) while the draw
+// code keeps working in logical w×h units.
+function makeTex(w, h, draw, ss = 1) {
+  const W = Math.max(2, Math.round(w)), Hh = Math.max(2, Math.round(h));
   const c = document.createElement("canvas");
-  c.width = Math.max(2, w);
-  c.height = Math.max(2, h);
+  c.width = W * ss;
+  c.height = Hh * ss;
   const ctx = c.getContext("2d");
   ctx.imageSmoothingEnabled = false;
-  draw(ctx, c.width, c.height);
+  ctx.scale(ss, ss);
+  draw(ctx, W, Hh);
   const tex = new THREE.CanvasTexture(c);
   tex.magFilter = THREE.NearestFilter;
   tex.minFilter = THREE.NearestFilter;
@@ -79,6 +83,19 @@ function ledDot(ctx, x, y, s = 1.4) {
   ctx.fillRect(x - s, y - s, s * 3, s * 3);
   ctx.globalAlpha = 1;
   ctx.fillRect(x, y, s, s);
+}
+
+// fill helpers (kept as thin wrappers; the `ow` arg is unused now)
+const OUTLINE = "#05060d";
+function oFill(ctx, fill, ow, path) {
+  ctx.beginPath();
+  path();
+  ctx.fillStyle = fill;
+  ctx.fill();
+}
+function oRect(ctx, x, y, w, h, fill) {
+  ctx.fillStyle = fill;
+  ctx.fillRect(x, y, w, h);
 }
 
 // ---- sky: gradient + faint clouds + stars ----------------------------------
@@ -240,39 +257,38 @@ function drawKLTower(ctx, W, H, led) {
   const antTip = H * 0.0, headTop = H * 0.34, gallery = H * 0.4, headBot = H * 0.46;
   const shaftTopW = W * 0.28, shaftBotW = W * 0.38, headW = W * 0.72;
   if (!led) {
+    const ow = 1.2;
     // slender concrete shaft
-    ctx.fillStyle = "#4c4767";
-    ctx.beginPath();
-    ctx.moveTo(cx - shaftBotW / 2, b);
-    ctx.lineTo(cx + shaftBotW / 2, b);
-    ctx.lineTo(cx + shaftTopW / 2, headBot);
-    ctx.lineTo(cx - shaftTopW / 2, headBot);
-    ctx.closePath();
-    ctx.fill();
+    oFill(ctx, "#4c4767", ow, () => {
+      ctx.moveTo(cx - shaftBotW / 2, b);
+      ctx.lineTo(cx + shaftBotW / 2, b);
+      ctx.lineTo(cx + shaftTopW / 2, headBot);
+      ctx.lineTo(cx - shaftTopW / 2, headBot);
+      ctx.closePath();
+    });
     ctx.fillStyle = "#6b6489";
     ctx.fillRect(cx - 1.5, headBot, 2, b - headBot);
     ctx.fillStyle = "#37324c";
     ctx.fillRect(cx + shaftTopW / 2 - 2, headBot, 2, b - headBot);
     // head: inverted-cone underside → gallery bulge → small dome
-    ctx.fillStyle = "#514c70";
-    ctx.beginPath();
-    ctx.moveTo(cx - shaftTopW / 2, headBot);
-    ctx.lineTo(cx - headW / 2, gallery);
-    ctx.lineTo(cx - headW * 0.34, headTop + 2);
-    ctx.quadraticCurveTo(cx, headTop - 3, cx + headW * 0.34, headTop + 2);
-    ctx.lineTo(cx + headW / 2, gallery);
-    ctx.lineTo(cx + shaftTopW / 2, headBot);
-    ctx.closePath();
-    ctx.fill();
+    oFill(ctx, "#514c70", ow, () => {
+      ctx.moveTo(cx - shaftTopW / 2, headBot);
+      ctx.lineTo(cx - headW / 2, gallery);
+      ctx.lineTo(cx - headW * 0.34, headTop + 2);
+      ctx.quadraticCurveTo(cx, headTop - 3, cx + headW * 0.34, headTop + 2);
+      ctx.lineTo(cx + headW / 2, gallery);
+      ctx.lineTo(cx + shaftTopW / 2, headBot);
+      ctx.closePath();
+    });
     // long tapering antenna with collars + red beacon
+    oFill(ctx, "#8a84a6", 0.8, () => {
+      ctx.moveTo(cx - 1.6, headTop);
+      ctx.lineTo(cx + 1.6, headTop);
+      ctx.lineTo(cx + 0.6, antTip + 2);
+      ctx.lineTo(cx - 0.6, antTip + 2);
+      ctx.closePath();
+    });
     ctx.fillStyle = "#8a84a6";
-    ctx.beginPath();
-    ctx.moveTo(cx - 1.6, headTop);
-    ctx.lineTo(cx + 1.6, headTop);
-    ctx.lineTo(cx + 0.6, antTip + 2);
-    ctx.lineTo(cx - 0.6, antTip + 2);
-    ctx.closePath();
-    ctx.fill();
     ctx.fillRect(cx - 2.5, headTop * 0.66, 5, 2);
     ctx.fillRect(cx - 2, headTop * 0.4, 4, 2);
     ctx.fillStyle = "#ff5a5a";
@@ -299,12 +315,11 @@ function drawMerdeka(ctx, W, H, led) {
   const leftEdge = [...left, ...crownL.slice(1)];
   const rightEdge = [...right, ...crownR.slice(0, -1).reverse()];
   if (!led) {
-    ctx.fillStyle = "#232a4a";
-    ctx.beginPath();
-    leftEdge.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
-    for (let i = rightEdge.length - 1; i >= 0; i--) ctx.lineTo(rightEdge[i][0], rightEdge[i][1]);
-    ctx.closePath();
-    ctx.fill();
+    oFill(ctx, "#232a4a", 1.3, () => {
+      leftEdge.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
+      for (let i = rightEdge.length - 1; i >= 0; i--) ctx.lineTo(rightEdge[i][0], rightEdge[i][1]);
+      ctx.closePath();
+    });
     // right-hand facet shade
     ctx.fillStyle = "#1a2038";
     ctx.beginPath();
@@ -314,14 +329,13 @@ function drawMerdeka(ctx, W, H, led) {
     ctx.closePath();
     ctx.fill();
     // long thin needle spire
-    ctx.fillStyle = "#9a94b4";
-    ctx.beginPath();
-    ctx.moveTo(cx - 1.1, crownPeak);
-    ctx.lineTo(cx + 1.1, crownPeak);
-    ctx.lineTo(cx + 0.35, spireTip);
-    ctx.lineTo(cx - 0.35, spireTip);
-    ctx.closePath();
-    ctx.fill();
+    oFill(ctx, "#9a94b4", 0.7, () => {
+      ctx.moveTo(cx - 1.1, crownPeak);
+      ctx.lineTo(cx + 1.1, crownPeak);
+      ctx.lineTo(cx + 0.35, spireTip);
+      ctx.lineTo(cx - 0.35, spireTip);
+      ctx.closePath();
+    });
     const rng = makeRng(455);
     for (let y = bodyTop + 8; y < b - 6; y += 7) {
       const hw = profHalf(prof, y) * W - 3;
@@ -346,35 +360,32 @@ function petronasTower(ctx, cx, W, H, led) {
   const tY = (i) => setTop + ((setBot - setTop) * i) / tiers;
   const tHW = (i) => hwSetTop + (hwShaft - hwSetTop) * (i / tiers);
   if (!led) {
-    ctx.fillStyle = "#1b2146";
-    ctx.beginPath(); // main shaft, gentle taper
-    ctx.moveTo(cx - hwShaft, b);
-    ctx.lineTo(cx + hwShaft, b);
-    ctx.lineTo(cx + hwShaft * 0.96, setBot);
-    ctx.lineTo(cx - hwShaft * 0.96, setBot);
-    ctx.closePath();
-    ctx.fill();
+    const ow = 1.0;
+    oFill(ctx, "#1b2146", ow, () => { // main shaft, gentle taper
+      ctx.moveTo(cx - hwShaft, b);
+      ctx.lineTo(cx + hwShaft, b);
+      ctx.lineTo(cx + hwShaft * 0.96, setBot);
+      ctx.lineTo(cx - hwShaft * 0.96, setBot);
+      ctx.closePath();
+    });
     ctx.fillStyle = "#10132e";
     ctx.fillRect(cx, setBot, hwShaft * 0.96, b - setBot);
     for (let i = tiers - 1; i >= 0; i--) { // stepped setbacks (wide at bottom)
       const hw = tHW(i);
-      ctx.fillStyle = "#1b2146";
-      ctx.fillRect(cx - hw, tY(i), hw * 2, tY(i + 1) - tY(i));
+      oRect(ctx, cx - hw, tY(i), hw * 2, tY(i + 1) - tY(i), "#1b2146", ow);
       ctx.fillStyle = "#10132e";
       ctx.fillRect(cx, tY(i), hw, tY(i + 1) - tY(i));
     }
-    ctx.fillStyle = "#2f3a6c"; // ringball
-    ctx.beginPath();
-    ctx.ellipse(cx, ballY, hwSetTop + 2, hwSetTop + 2, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = "#9a94b4"; // pinnacle mast
-    ctx.beginPath();
-    ctx.moveTo(cx - 1, ballY);
-    ctx.lineTo(cx + 1, ballY);
-    ctx.lineTo(cx + 0.4, mastTip);
-    ctx.lineTo(cx - 0.4, mastTip);
-    ctx.closePath();
-    ctx.fill();
+    oFill(ctx, "#2f3a6c", ow, () => // ringball
+      ctx.ellipse(cx, ballY, hwSetTop + 2, hwSetTop + 2, 0, 0, Math.PI * 2)
+    );
+    oFill(ctx, "#9a94b4", 0.7, () => { // pinnacle mast
+      ctx.moveTo(cx - 1, ballY);
+      ctx.lineTo(cx + 1, ballY);
+      ctx.lineTo(cx + 0.4, mastTip);
+      ctx.lineTo(cx - 0.4, mastTip);
+      ctx.closePath();
+    });
     const rng = makeRng(Math.round(cx) * 5 + 9);
     for (let y = setBot + 4; y < b - 5; y += 6) {
       const hw = hwShaft - 2;
@@ -397,16 +408,17 @@ function drawPetronas(ctx, W, H, led) {
   petronasTower(ctx, R, W, H, led);
   const by = H * 0.6, apex = by + 7, foot = H * 0.72; // skybridge ~41st floor + ∧ arch
   if (!led) {
-    ctx.fillStyle = "#2f3a6c";
-    ctx.fillRect(L, by, R - L, 2.5);
-    ctx.fillRect(L, by + 5, R - L, 2.5);
-    ctx.strokeStyle = "#2f3a6c";
-    ctx.lineWidth = 2;
+    oRect(ctx, L, by, R - L, 2.5, "#2f3a6c");
+    oRect(ctx, L, by + 5, R - L, 2.5, "#2f3a6c");
+    // arch legs
+    ctx.lineCap = "round";
     ctx.beginPath();
     ctx.moveTo((L + R) / 2, apex);
     ctx.lineTo(L, foot);
     ctx.moveTo((L + R) / 2, apex);
     ctx.lineTo(R, foot);
+    ctx.strokeStyle = "#2f3a6c";
+    ctx.lineWidth = 2;
     ctx.stroke();
   } else {
     ledLine(ctx, [[L, by + 1], [R, by + 1]], 1.0);
@@ -700,8 +712,8 @@ function Scene({ scroll }) {
       const h = Math.ceil((L.hFrac * bh) / PX);
       const w = Math.ceil(h * L.aspect);
       t.lm[L.key] = {
-        struct: makeTex(w, h, (c, W, Hh) => L.draw(c, W, Hh, false)),
-        leds: makeTex(w, h, (c, W, Hh) => L.draw(c, W, Hh, true)),
+        struct: makeTex(w, h, (c, W, Hh) => L.draw(c, W, Hh, false), 3),
+        leds: makeTex(w, h, (c, W, Hh) => L.draw(c, W, Hh, true), 3),
       };
     });
     return t;
