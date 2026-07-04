@@ -502,8 +502,8 @@ function drawBalcony(ctx, W, H) {
 
   // --- glass balustrade: framed top+bottom rails + regular posts (no open gap) ---
   const glassTop = railTop + handH, glassBot = capY, glassH = glassBot - glassTop;
-  ctx.globalAlpha = 0.13; // glass tint — a touch more present so it reads as railing
-  ctx.fillStyle = "#5ad1ff";
+  ctx.globalAlpha = 0.1; // glass tint — darker/deeper so it reads as smoked glass
+  ctx.fillStyle = "#1d4a63";
   ctx.fillRect(0, glassTop, W, glassH);
   ctx.globalAlpha = 1;
   // posts (closer together) + a soft reflection streak on each panel
@@ -559,20 +559,26 @@ function drawBalcony(ctx, W, H) {
     ctx.fillRect(x, y, 2, 2);
   }
 
-  // --- cozy props (scaled up + a lively spread) ---------------------------
-  // Only a thin sliver of deck is on-screen (very bottom), so EVERY prop rests
-  // its feet on `floor` — the visible deck line — or its base falls off-screen
-  // and it looks like it floats.
+  // --- cozy props: four evenly-spaced vignettes on a grounded deck ---------
+  // The whole balcony texture is supersampled (see makeTex ss below) so props
+  // stay crisp. They're laid out as deliberate little scenes with clear gaps
+  // between them (rather than scattered) and every prop rests on `floor`.
   const floor = capY + 5;
   const D = "#171433"; // prop silhouette colour
-  const plant = (x, base, hgt, n, col) => {
-    ctx.fillStyle = col;
-    for (let i = 0; i < n; i++)
-      ctx.fillRect(x + (i - (n - 1) / 2) * 4, base - hgt + Math.abs(i - (n - 1) / 2) * 3, 3, hgt - Math.abs(i - (n - 1) / 2) * 3);
-    ctx.fillStyle = "#15112c";
-    ctx.fillRect(x - 7, base - 2, 14, 12); // pot
-  };
-  // soft CIRCULAR glow for a light source (+ a bright core)
+  const px = (f) => Math.round(W * f);
+
+  // visible deck the props stand on — grounds them so they don't float
+  const deck = ctx.createLinearGradient(0, floor, 0, H);
+  deck.addColorStop(0, "#1b1738");
+  deck.addColorStop(0.4, "#100d24");
+  deck.addColorStop(1, "#070512");
+  ctx.fillStyle = deck;
+  ctx.fillRect(0, floor, W, H - floor);
+  ctx.globalAlpha = 0.5;
+  ctx.fillStyle = "#39336a";
+  ctx.fillRect(0, floor, W, 1);       // lit front edge of the deck
+  ctx.globalAlpha = 1;
+
   const glow = (cx, cy, r) => {
     const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
     g.addColorStop(0, "rgba(255,214,130,0.62)");
@@ -586,12 +592,22 @@ function drawBalcony(ctx, W, H) {
     ctx.fillRect(Math.round(cx) - 1, Math.round(cy) - 1, 2, 2);
   };
   const shadow = (cx, w) => {
-    ctx.globalAlpha = 0.3;
+    ctx.globalAlpha = 0.4;
     ctx.fillStyle = "#000000";
-    ctx.fillRect(Math.round(cx - w / 2), floor, w, 2);
+    ctx.beginPath();
+    ctx.ellipse(cx, floor + 1, w / 2, 2.5, 0, 0, Math.PI * 2); // grounding pool
+    ctx.fill();
     ctx.globalAlpha = 1;
   };
-  // reusable lights
+  const plant = (x, hgt, n, col) => {
+    const base = floor + 2;
+    shadow(x, 16);
+    ctx.fillStyle = col;
+    for (let i = 0; i < n; i++)
+      ctx.fillRect(x + (i - (n - 1) / 2) * 4, base - hgt + Math.abs(i - (n - 1) / 2) * 3, 3, hgt - Math.abs(i - (n - 1) / 2) * 3);
+    ctx.fillStyle = "#15112c";
+    ctx.fillRect(x - 7, base - 2, 14, 12); // pot
+  };
   const hangLantern = (x) => {
     ctx.strokeStyle = "rgba(120,100,70,0.5)";
     ctx.lineWidth = 1;
@@ -611,145 +627,131 @@ function drawBalcony(ctx, W, H) {
     ctx.fillRect(x - 3, floor - 22, 6, 6);   // lamp
     glow(x, floor - 19, 10);
   };
+  const floorLamp = (x) => {
+    shadow(x, 16);
+    ctx.fillStyle = D;
+    ctx.fillRect(x - 5, floor - 1, 10, 2);   // base
+    ctx.fillRect(x - 1, floor - 22, 3, 21);  // pole
+    ctx.fillStyle = "#241f4a";
+    ctx.fillRect(x - 6, floor - 28, 12, 6);  // shade
+    glow(x, floor - 25, 11);
+  };
 
-  hangLantern(Math.round(W * 0.15));
-  hangLantern(Math.round(W * 0.97));
+  // overhead string-lantern rhythm + corner greenery framing the scenes
+  hangLantern(px(0.10));
+  hangLantern(px(0.50));
+  hangLantern(px(0.90));
+  plant(px(0.03), 32, 11, "#0e2416"); // tall palm, far-left corner
+  plant(px(0.28), 22, 9, "#0e1c14");  // divider L
+  plant(px(0.72), 20, 8, "#0e1c14");  // divider R
+  plant(px(0.97), 18, 7, "#0d1a12");  // far-right corner
 
-  // plants dotted around (one tall palm far left)
-  plant(Math.round(W * 0.04), floor + 2, 32, 11, "#0e2416");
-  plant(Math.round(W * 0.2), floor + 2, 22, 9, "#0e1c14");
-  plant(Math.round(W * 0.93), floor + 2, 18, 7, "#0d1a12");
-
-  // floor lamp with a glowing shade (left)
-  const flx = Math.round(W * 0.1);
-  shadow(flx, 16);
+  // ============ VIGNETTE 1 — coffee lounge (left) ============
+  const v1 = px(0.15);
+  floorLamp(v1 - 42);
+  // bistro table + two chairs + candle
+  shadow(v1, 46);
   ctx.fillStyle = D;
-  ctx.fillRect(flx - 5, floor - 1, 10, 2);   // base
-  ctx.fillRect(flx - 1, floor - 22, 3, 21);  // pole
-  ctx.fillStyle = "#241f4a";
-  ctx.fillRect(flx - 6, floor - 28, 12, 6);  // shade
-  glow(flx, floor - 25, 11);
-
-  // bistro table + two chairs + a candle (centre-left)
-  const tx = Math.round(W * 0.27);
-  shadow(tx, 46);
+  ctx.fillRect(v1 - 20, floor - 14, 3, 15); ctx.fillRect(v1 - 23, floor - 22, 8, 3); // L chair
+  ctx.fillRect(v1 + 17, floor - 14, 3, 15); ctx.fillRect(v1 + 15, floor - 22, 8, 3); // R chair
+  ctx.fillRect(v1 - 2, floor - 12, 4, 13);  // pedestal
+  ctx.fillRect(v1 - 11, floor - 14, 22, 3); // table top
+  glow(v1, floor - 18, 5);                  // candle
+  ctx.fillStyle = "#ffe6a8"; ctx.fillRect(v1 - 1, floor - 20, 3, 4);
+  // stool with a warm mug + steam
+  const st = v1 + 42;
+  shadow(st, 14);
   ctx.fillStyle = D;
-  ctx.fillRect(tx - 20, floor - 14, 3, 15); ctx.fillRect(tx - 23, floor - 22, 8, 3); // L chair
-  ctx.fillRect(tx + 17, floor - 14, 3, 15); ctx.fillRect(tx + 15, floor - 22, 8, 3); // R chair
-  ctx.fillRect(tx - 2, floor - 12, 4, 13);  // pedestal
-  ctx.fillRect(tx - 11, floor - 14, 22, 3); // table top
-  glow(tx, floor - 18, 5);                  // candle
-  ctx.fillStyle = "#ffe6a8"; ctx.fillRect(tx - 1, floor - 20, 3, 4);
+  ctx.fillRect(st - 7, floor - 9, 14, 3); // top
+  ctx.fillRect(st - 5, floor - 6, 2, 6); ctx.fillRect(st + 3, floor - 6, 2, 6); // legs
+  glow(st, floor - 13, 5);                // mug
+  ctx.globalAlpha = 0.22;
+  ctx.fillStyle = "#dfeaff";
+  ctx.fillRect(st - 1, floor - 18, 1, 4); ctx.fillRect(st + 2, floor - 20, 1, 4); // steam
+  ctx.globalAlpha = 1;
 
-  // easel with a tiny abstract canvas (a nod to the craft)
-  const esx = Math.round(W * 0.34);
-  shadow(esx, 18);
+  // ============ VIGNETTE 2 — creative studio (centre-left) ============
+  const v2 = px(0.39);
+  // easel with a tiny abstract canvas
+  const es = v2 - 20;
+  shadow(es, 18);
   ctx.strokeStyle = D;
   ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.moveTo(esx - 7, floor); ctx.lineTo(esx, floor - 24);
-  ctx.moveTo(esx + 7, floor); ctx.lineTo(esx, floor - 24);
-  ctx.moveTo(esx + 4, floor - 4); ctx.lineTo(esx + 9, floor);
+  ctx.moveTo(es - 7, floor); ctx.lineTo(es, floor - 24); // left leg
+  ctx.moveTo(es + 7, floor); ctx.lineTo(es, floor - 24); // right leg
   ctx.stroke();
-  ctx.fillStyle = "#2a2550"; ctx.fillRect(esx - 8, floor - 22, 16, 13);   // canvas
-  ctx.globalAlpha = 0.6; ctx.fillStyle = "#3fe0ff"; ctx.fillRect(esx - 7, floor - 21, 14, 5); ctx.globalAlpha = 1;
-  ctx.fillStyle = "#ff9ecb"; ctx.fillRect(esx - 7, floor - 15, 14, 4);
-
+  ctx.fillStyle = "#2a2550"; ctx.fillRect(es - 8, floor - 22, 16, 13); // canvas
+  ctx.globalAlpha = 0.6; ctx.fillStyle = "#3fe0ff"; ctx.fillRect(es - 7, floor - 21, 14, 5); ctx.globalAlpha = 1;
+  ctx.fillStyle = "#ff9ecb"; ctx.fillRect(es - 7, floor - 15, 14, 4);
   // camera on a tripod
-  const cvx = Math.round(W * 0.41);
-  shadow(cvx, 20);
+  const cv = v2 + 20;
+  shadow(cv, 20);
   ctx.strokeStyle = D;
   ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.moveTo(cvx, floor - 16); ctx.lineTo(cvx - 8, floor);
-  ctx.moveTo(cvx, floor - 16); ctx.lineTo(cvx + 8, floor);
-  ctx.moveTo(cvx, floor - 16); ctx.lineTo(cvx + 1, floor);
+  ctx.moveTo(cv, floor - 16); ctx.lineTo(cv - 8, floor);
+  ctx.moveTo(cv, floor - 16); ctx.lineTo(cv + 8, floor);
+  ctx.moveTo(cv, floor - 16); ctx.lineTo(cv + 1, floor);
   ctx.stroke();
   ctx.fillStyle = "#1d1940";
-  ctx.fillRect(cvx - 8, floor - 24, 16, 8); // body
-  ctx.fillRect(cvx + 7, floor - 22, 4, 4);  // lens
-  ctx.fillStyle = "#ff5a5a"; ctx.fillRect(cvx - 6, floor - 23, 2, 2); // rec light
+  ctx.fillRect(cv - 8, floor - 24, 16, 8); // body
+  ctx.fillRect(cv + 7, floor - 22, 4, 4);  // lens
+  ctx.fillStyle = "#ff5a5a"; ctx.fillRect(cv - 6, floor - 23, 2, 2); // rec light
 
+  // ============ VIGNETTE 3 — chill nook (centre-right) ============
+  const v3 = px(0.61);
   // beanbag / floor cushion
-  const bbx = Math.round(W * 0.47);
-  shadow(bbx, 22);
+  const bb = v3 - 22;
+  shadow(bb, 22);
   ctx.fillStyle = "#2a2550";
-  ctx.beginPath(); ctx.ellipse(bbx, floor - 3, 12, 6, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(bb, floor - 3, 12, 6, 0, 0, Math.PI * 2); ctx.fill();
   ctx.fillStyle = "#332b5c";
-  ctx.beginPath(); ctx.ellipse(bbx, floor - 7, 9, 4, 0, 0, Math.PI * 2); ctx.fill();
-
-  // standing lantern (centre)
-  standLantern(Math.round(W * 0.53), "#ffb347");
-
+  ctx.beginPath(); ctx.ellipse(bb, floor - 7, 9, 4, 0, 0, Math.PI * 2); ctx.fill();
+  // standing lantern
+  standLantern(v3, "#ffb347");
   // acoustic guitar leaning
-  const gtx = Math.round(W * 0.58);
-  shadow(gtx, 14);
+  const gt = v3 + 24;
+  shadow(gt, 14);
   ctx.strokeStyle = "#241a10"; ctx.lineWidth = 3;
-  ctx.beginPath(); ctx.moveTo(gtx - 2, floor - 8); ctx.lineTo(gtx - 9, floor - 28); ctx.stroke(); // neck
+  ctx.beginPath(); ctx.moveTo(gt - 2, floor - 8); ctx.lineTo(gt - 9, floor - 28); ctx.stroke(); // neck
   ctx.fillStyle = "#5a3a1e";
-  ctx.beginPath(); ctx.ellipse(gtx, floor - 6, 7, 9, 0, 0, Math.PI * 2); ctx.fill(); // body
-  ctx.fillStyle = "#2a1a0e"; ctx.fillRect(gtx - 2, floor - 8, 4, 4); // sound hole
+  ctx.beginPath(); ctx.ellipse(gt, floor - 6, 7, 9, 0, 0, Math.PI * 2); ctx.fill(); // body
+  ctx.fillStyle = "#2a1a0e"; ctx.fillRect(gt - 2, floor - 8, 4, 4); // sound hole
 
+  // ============ VIGNETTE 4 — stargazing corner (right) ============
+  const v4 = px(0.85);
   // director's chair
-  const dcx = Math.round(W * 0.63);
-  shadow(dcx, 18);
+  const dc = v4 - 30;
+  shadow(dc, 18);
   ctx.strokeStyle = D;
   ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.moveTo(dcx - 8, floor); ctx.lineTo(dcx + 5, floor - 15);
-  ctx.moveTo(dcx + 8, floor); ctx.lineTo(dcx - 5, floor - 15);
+  ctx.moveTo(dc - 8, floor); ctx.lineTo(dc + 5, floor - 15);
+  ctx.moveTo(dc + 8, floor); ctx.lineTo(dc - 5, floor - 15);
   ctx.stroke();
   ctx.fillStyle = "#241f4a";
-  ctx.fillRect(dcx - 8, floor - 16, 16, 3); // seat
-  ctx.fillRect(dcx - 8, floor - 25, 16, 3); // back
-
-  // stack of books
-  const bkx = Math.round(W * 0.68);
+  ctx.fillRect(dc - 8, floor - 16, 16, 3); // seat
+  ctx.fillRect(dc - 8, floor - 25, 16, 3); // back
+  // stack of books beside the chair
+  const bk = v4 - 8;
   const books = ["#3b5a86", "#7a3b5a", "#b58a3a"];
   for (let i = 0; i < 3; i++) {
     ctx.fillStyle = books[i];
-    ctx.fillRect(bkx - 6 + i, floor - 3 - i * 3, 13 - i * 2, 3);
+    ctx.fillRect(bk - 6 + i, floor - 3 - i * 3, 13 - i * 2, 3);
   }
-
-  // stool with a warm mug + steam
-  const stx = Math.round(W * 0.77);
-  shadow(stx, 14);
-  ctx.fillStyle = D;
-  ctx.fillRect(stx - 7, floor - 9, 14, 3); // top
-  ctx.fillRect(stx - 5, floor - 6, 2, 6); ctx.fillRect(stx + 3, floor - 6, 2, 6); // legs
-  glow(stx, floor - 13, 5);                // mug
-  ctx.globalAlpha = 0.22;
-  ctx.fillStyle = "#dfeaff";
-  ctx.fillRect(stx - 1, floor - 18, 1, 4); ctx.fillRect(stx + 2, floor - 20, 1, 4); // steam
-  ctx.globalAlpha = 1;
-
   // telescope on a tripod, pointed at the sky
-  const tlx = Math.round(W * 0.83);
-  shadow(tlx, 16);
+  const tl = v4 + 22;
+  shadow(tl, 16);
   ctx.strokeStyle = D;
   ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.moveTo(tlx, floor - 11); ctx.lineTo(tlx - 6, floor);
-  ctx.moveTo(tlx, floor - 11); ctx.lineTo(tlx + 6, floor);
+  ctx.moveTo(tl, floor - 11); ctx.lineTo(tl - 6, floor);
+  ctx.moveTo(tl, floor - 11); ctx.lineTo(tl + 6, floor);
   ctx.stroke();
   ctx.strokeStyle = "#3a3470"; ctx.lineWidth = 4;
-  ctx.beginPath(); ctx.moveTo(tlx - 5, floor - 9); ctx.lineTo(tlx + 8, floor - 24); ctx.stroke(); // tube
-  ctx.fillStyle = "#2c2660"; ctx.fillRect(tlx + 6, floor - 26, 4, 4);
-
-  // round paper lantern resting on the ledge (right)
-  const plx = Math.round(W * 0.88);
-  glow(plx, floor - 8, 11);
-  ctx.fillStyle = "#ffcf6b"; ctx.fillRect(plx - 4, floor - 12, 8, 8);
-  ctx.fillStyle = "#ffe6a8"; ctx.fillRect(plx - 3, floor - 11, 6, 6);
-
-  // a cat curled on the handrail (a bit of charm)
-  const kx = Math.round(W * 0.72);
-  ctx.fillStyle = "#0a0818";
-  ctx.fillRect(kx - 7, railTop - 8, 12, 10);  // body
-  ctx.fillRect(kx + 4, railTop - 12, 5, 8);   // head
-  ctx.fillRect(kx + 4, railTop - 15, 2, 4);   // ear
-  ctx.fillRect(kx + 8, railTop - 15, 2, 4);   // ear
-  ctx.fillRect(kx - 8, railTop - 4, 2, 7);    // tail
+  ctx.beginPath(); ctx.moveTo(tl - 5, floor - 9); ctx.lineTo(tl + 8, floor - 24); ctx.stroke(); // tube
+  ctx.fillStyle = "#2c2660"; ctx.fillRect(tl + 6, floor - 26, 4, 4);
 }
 
 // ---- moon: blocky PIXEL disc (per-pixel circle) + soft glow ----------------
@@ -1207,7 +1209,7 @@ function Scene({ scroll }) {
       far: makeTex(artW, cityH, cityDrawer(21, 0.22, 0.58, far, 0.24, 0.24)),
       mid: makeTex(artW, cityH, cityDrawer(88, 0.18, 0.44, mid, 0.5, 0.32)),
       near: makeTex(artW, cityH, cityDrawer(303, 0.14, 0.36, near, 0.42, 0.3, mobile ? MOBILE_SLOTS : SIGN_SLOTS)),
-      balcony: makeTex(artW, balH, drawBalcony),
+      balcony: makeTex(artW, balH, drawBalcony, 3),
       lm: {},
     };
     LANDMARKS.forEach((L) => {

@@ -639,6 +639,7 @@ img, video { display: block; max-width: 100%; }
 .about {
   /* no full-width veil — the single .plate.wide panel provides the backdrop */
   background: transparent;
+  padding-bottom: 40px; /* tighten the gap down to the Contact section */
 }
 .about-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 48px; align-items: start; }
 .about p { color: var(--text-muted); line-height: 1.75; font-size: 1.05rem; }
@@ -681,18 +682,17 @@ img, video { display: block; max-width: 100%; }
 
 /* ---------- CONTACT ---------- */
 .contact {
-  /* keep the ~90% black background, but feather the TOP so it fades in from the
-     BEHIND THE CUT section instead of a hard seam */
+  /* black fills the section right up to the "CONTACT" eyebrow; only a thin top
+     strip feathers in from the scene above so there's no hard seam */
   background: linear-gradient(180deg,
     rgba(5, 6, 15, 0) 0%,
-    rgba(5, 6, 15, 0) 38%,
-    rgba(5, 6, 15, 0.85) 56%,
-    rgba(5, 6, 15, 0.94) 100%);
+    rgba(5, 6, 15, 0.92) 10%,
+    rgba(5, 6, 15, 0.96) 30%,
+    rgba(5, 6, 15, 0.97) 100%);
   text-align: center;
-  /* fill the viewport so scrolling here pushes the ABOUT content off the top —
-     only the background + contact remain in view. Content sits in the lower
-     half so the final view is ~50% background (top) / 50% contact (bottom). */
-  min-height: 100vh;
+  /* content sits near the bottom over the scene; a shorter min-height keeps the
+     heading closer to the About section above (smaller empty gap). */
+  min-height: 50vh;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
