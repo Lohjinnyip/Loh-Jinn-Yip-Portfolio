@@ -482,56 +482,65 @@ function drawPetronas(ctx, W, H, led) {
 // ---- balcony: railing + props + string lights, long dark floor -------------
 function drawBalcony(ctx, W, H) {
   ctx.clearRect(0, 0, W, H);
-  // layout in art px: handrail near the top, balusters down to the parapet cap,
-  // then the solid deck fills the rest (the surface you'd stand on)
+  // Redesigned: a sleek glass-balustrade rooftop terrace — far less cluttered
+  // than before. Same key y-lines so BAL_TOP / BAL_SPAN placement is unchanged.
   const railTop = 11, handH = 5, midY = 27, capY = 42;
 
-  // --- solid deck / parapet (foreground surface) ---
+  // --- solid parapet + deck (foreground surface) ---
   const fg = ctx.createLinearGradient(0, capY, 0, H);
   fg.addColorStop(0, "#100d20");
   fg.addColorStop(1, "#050409");
   ctx.fillStyle = fg;
   ctx.fillRect(0, capY, W, H - capY);
-  // parapet cap: lit concrete ledge the railing mounts on
-  ctx.fillStyle = "#2b2656";
+  // lit concrete cap the railing mounts on
+  ctx.fillStyle = "#241f4a";
   ctx.fillRect(0, capY, W, 4);
-  ctx.globalAlpha = 0.6;
-  ctx.fillStyle = "#5a54a0";
+  ctx.globalAlpha = 0.7;
+  ctx.fillStyle = "#3fe0ff";
   ctx.fillRect(0, capY, W, 1.5);
   ctx.globalAlpha = 1;
-  // deck perspective lines for depth
-  ctx.strokeStyle = "rgba(74,64,124,0.16)";
-  ctx.lineWidth = 1;
-  for (let i = 1; i <= 5; i++) {
-    const y = capY + 6 + i * ((H - capY) / 8);
-    ctx.beginPath();
-    ctx.moveTo(0, y);
-    ctx.lineTo(W, y);
-    ctx.stroke();
-  }
 
-  // --- railing: balusters between handrail and cap, city glows through gaps --
-  const balBot = capY;
-  for (let x = 9; x < W - 3; x += 14) {
-    ctx.fillStyle = "#1a1638";
-    ctx.fillRect(x, railTop + handH, 4, balBot - (railTop + handH));
-    ctx.fillStyle = "#2c2660"; // baluster highlight edge
-    ctx.fillRect(x, railTop + handH, 1.5, balBot - (railTop + handH));
+  // --- glass balustrade: framed top+bottom rails + regular posts (no open gap) ---
+  const glassTop = railTop + handH, glassBot = capY, glassH = glassBot - glassTop;
+  ctx.globalAlpha = 0.13; // glass tint — a touch more present so it reads as railing
+  ctx.fillStyle = "#5ad1ff";
+  ctx.fillRect(0, glassTop, W, glassH);
+  ctx.globalAlpha = 1;
+  // posts (closer together) + a soft reflection streak on each panel
+  for (let x = 8; x < W; x += 18) {
+    ctx.globalAlpha = 0.07;
+    ctx.fillStyle = "#bfe9ff";
+    ctx.fillRect(x + 5, glassTop, 2, glassH);
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = "#15122e";
+    ctx.fillRect(x, glassTop, 2, glassH);
+    ctx.fillStyle = "#2c2660";
+    ctx.fillRect(x, glassTop, 1, glassH);
   }
+  // bottom rail — closes the gap just above the cap
+  ctx.fillStyle = "#161234";
+  ctx.fillRect(0, glassBot - 3, W, 3);
+  ctx.globalAlpha = 0.45;
+  ctx.fillStyle = "#3a3470";
+  ctx.fillRect(0, glassBot - 3, W, 1);
+  ctx.globalAlpha = 1;
   // mid rail
   ctx.fillStyle = "#141130";
-  ctx.fillRect(0, midY, W, 3);
-  // handrail
+  ctx.fillRect(0, midY, W, 2);
+  ctx.globalAlpha = 0.4;
+  ctx.fillStyle = "#3a3470";
+  ctx.fillRect(0, midY, W, 1);
+  ctx.globalAlpha = 1;
+  // handrail with neon top edge
   ctx.fillStyle = "#0f0d24";
   ctx.fillRect(0, railTop, W, handH);
-  // neon-lit top edge of the handrail
-  ctx.globalAlpha = 0.6;
+  ctx.globalAlpha = 0.65;
   ctx.fillStyle = "#3fe0ff";
   ctx.fillRect(0, railTop, W, 1.5);
   ctx.globalAlpha = 1;
 
-  // --- bistro string lights strung above the handrail ---
-  ctx.strokeStyle = "rgba(120,100,70,0.45)";
+  // --- string lights strung above the rail (soft multicolour bulbs) ---
+  ctx.strokeStyle = "rgba(120,100,70,0.4)";
   ctx.lineWidth = 1;
   ctx.beginPath();
   for (let x = 0; x <= W; x += 4) {
@@ -539,102 +548,208 @@ function drawBalcony(ctx, W, H) {
     x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
   }
   ctx.stroke();
-  for (let x = 18; x < W; x += 44) {
+  const bulbs = ["#ffd27a", "#7dd3fc", "#ff9ecb", "#c9b6ff"];
+  for (let x = 16, i = 0; x < W; x += 40, i++) {
     const y = 6 + Math.sin((x / W) * Math.PI * 9) * 2.5;
     ctx.globalAlpha = 0.3;
-    ctx.fillStyle = "#ffd27a";
+    ctx.fillStyle = bulbs[i % bulbs.length];
     ctx.fillRect(x - 1.5, y - 1.5, 4, 4);
     ctx.globalAlpha = 1;
     ctx.fillStyle = "#ffe6a8";
     ctx.fillRect(x, y, 2, 2);
   }
 
-  // --- props on the deck (in front of the railing) ---
-  // potted plant, left
-  const px = Math.round(W * 0.15);
-  ctx.fillStyle = "#0d1a12";
-  for (let i = 0; i < 7; i++) ctx.fillRect(px + (i - 3) * 3, capY - 4 - (3 - Math.abs(i - 3)) * 3, 2, 16);
-  ctx.fillStyle = "#15112c";
-  ctx.beginPath();
-  ctx.moveTo(px - 8, capY + 12);
-  ctx.lineTo(px + 8, capY + 12);
-  ctx.lineTo(px + 6, capY - 2);
-  ctx.lineTo(px - 6, capY - 2);
-  ctx.fill();
-  // warm glowing lantern on a slim stand (cosy focal point)
-  const lx = Math.round(W * 0.31);
-  ctx.fillStyle = "#171433";
-  ctx.fillRect(lx - 2, capY + 2, 4, 16);
-  ctx.fillRect(lx - 6, capY + 16, 12, 3);
-  win(ctx, lx - 5, capY - 8, 10, 10, "#ffcf6b");
-  // AC condenser units, right
-  const ax = Math.round(W * 0.82);
-  ctx.fillStyle = "#14122a";
-  for (let i = 0; i < 2; i++) {
-    const bx = ax + i * 36;
-    ctx.fillRect(bx, capY + 2, 30, 18);
-    ctx.strokeStyle = "#2a2650";
-    ctx.strokeRect(bx + 4, capY + 6, 22, 10);
-  }
-
-  // small leafy plant (pot + fronds)
+  // --- cozy props (scaled up + a lively spread) ---------------------------
+  // Only a thin sliver of deck is on-screen (very bottom), so EVERY prop rests
+  // its feet on `floor` — the visible deck line — or its base falls off-screen
+  // and it looks like it floats.
+  const floor = capY + 5;
+  const D = "#171433"; // prop silhouette colour
   const plant = (x, base, hgt, n, col) => {
     ctx.fillStyle = col;
     for (let i = 0; i < n; i++)
-      ctx.fillRect(x + (i - (n - 1) / 2) * 3, base - hgt + Math.abs(i - (n - 1) / 2) * 2, 2, hgt - Math.abs(i - (n - 1) / 2) * 2);
+      ctx.fillRect(x + (i - (n - 1) / 2) * 4, base - hgt + Math.abs(i - (n - 1) / 2) * 3, 3, hgt - Math.abs(i - (n - 1) / 2) * 3);
     ctx.fillStyle = "#15112c";
-    ctx.fillRect(x - 5, base - 2, 10, 9);
+    ctx.fillRect(x - 7, base - 2, 14, 12); // pot
   };
-  plant(Math.round(W * 0.08), capY + 12, 14, 7, "#0d1a12");
-  plant(Math.round(W * 0.66), capY + 14, 26, 9, "#0e1c14"); // tall one
-  plant(Math.round(W * 0.9), capY + 12, 12, 5, "#0d1a12");
+  // soft CIRCULAR glow for a light source (+ a bright core)
+  const glow = (cx, cy, r) => {
+    const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+    g.addColorStop(0, "rgba(255,214,130,0.62)");
+    g.addColorStop(0.45, "rgba(255,176,90,0.28)");
+    g.addColorStop(1, "rgba(255,176,90,0)");
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#fff2cf";
+    ctx.fillRect(Math.round(cx) - 1, Math.round(cy) - 1, 2, 2);
+  };
+  const shadow = (cx, w) => {
+    ctx.globalAlpha = 0.3;
+    ctx.fillStyle = "#000000";
+    ctx.fillRect(Math.round(cx - w / 2), floor, w, 2);
+    ctx.globalAlpha = 1;
+  };
+  // reusable lights
+  const hangLantern = (x) => {
+    ctx.strokeStyle = "rgba(120,100,70,0.5)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x, 5); ctx.lineTo(x, 17);
+    ctx.stroke();
+    glow(x, 22, 10);
+    ctx.fillStyle = "#ffcf6b"; ctx.fillRect(x - 3, 18, 7, 7);
+    ctx.fillStyle = "#ffe6a8"; ctx.fillRect(x - 2, 19, 5, 5);
+  };
+  const standLantern = (x, col) => {
+    shadow(x, 14);
+    ctx.fillStyle = D;
+    ctx.fillRect(x - 5, floor - 1, 10, 2);   // base
+    ctx.fillRect(x - 1, floor - 17, 3, 16);  // post
+    ctx.fillStyle = col;
+    ctx.fillRect(x - 3, floor - 22, 6, 6);   // lamp
+    glow(x, floor - 19, 10);
+  };
 
-  // bistro table + two chairs + a candle glow
-  const tx = Math.round(W * 0.25), td = capY + 17;
-  ctx.fillStyle = "#171433";
-  ctx.fillRect(tx - 17, td - 12, 3, 14); ctx.fillRect(tx - 18, td - 13, 7, 3); // left chair
-  ctx.fillRect(tx + 14, td - 12, 3, 14); ctx.fillRect(tx + 11, td - 13, 7, 3); // right chair
-  ctx.fillRect(tx - 2, td - 9, 4, 11);   // table pedestal
-  ctx.fillRect(tx - 10, td - 11, 20, 3); // table top
-  win(ctx, tx - 1, td - 17, 3, 4, "#ffcf6b"); // candle
+  hangLantern(Math.round(W * 0.15));
+  hangLantern(Math.round(W * 0.97));
 
-  // lounge chair (reclined silhouette)
-  const lc = Math.round(W * 0.45), lb = capY + 18;
-  ctx.fillStyle = "#171433";
+  // plants dotted around (one tall palm far left)
+  plant(Math.round(W * 0.04), floor + 2, 32, 11, "#0e2416");
+  plant(Math.round(W * 0.2), floor + 2, 22, 9, "#0e1c14");
+  plant(Math.round(W * 0.93), floor + 2, 18, 7, "#0d1a12");
+
+  // floor lamp with a glowing shade (left)
+  const flx = Math.round(W * 0.1);
+  shadow(flx, 16);
+  ctx.fillStyle = D;
+  ctx.fillRect(flx - 5, floor - 1, 10, 2);   // base
+  ctx.fillRect(flx - 1, floor - 22, 3, 21);  // pole
+  ctx.fillStyle = "#241f4a";
+  ctx.fillRect(flx - 6, floor - 28, 12, 6);  // shade
+  glow(flx, floor - 25, 11);
+
+  // bistro table + two chairs + a candle (centre-left)
+  const tx = Math.round(W * 0.27);
+  shadow(tx, 46);
+  ctx.fillStyle = D;
+  ctx.fillRect(tx - 20, floor - 14, 3, 15); ctx.fillRect(tx - 23, floor - 22, 8, 3); // L chair
+  ctx.fillRect(tx + 17, floor - 14, 3, 15); ctx.fillRect(tx + 15, floor - 22, 8, 3); // R chair
+  ctx.fillRect(tx - 2, floor - 12, 4, 13);  // pedestal
+  ctx.fillRect(tx - 11, floor - 14, 22, 3); // table top
+  glow(tx, floor - 18, 5);                  // candle
+  ctx.fillStyle = "#ffe6a8"; ctx.fillRect(tx - 1, floor - 20, 3, 4);
+
+  // easel with a tiny abstract canvas (a nod to the craft)
+  const esx = Math.round(W * 0.34);
+  shadow(esx, 18);
+  ctx.strokeStyle = D;
+  ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.moveTo(lc - 16, lb);
-  ctx.lineTo(lc + 12, lb);
-  ctx.lineTo(lc + 12, lb - 4);
-  ctx.lineTo(lc - 4, lb - 5);
-  ctx.lineTo(lc - 16, lb - 15);
-  ctx.closePath();
-  ctx.fill();
-  ctx.fillRect(lc - 15, lb, 3, 6);
-  ctx.fillRect(lc + 8, lb, 3, 6);
-
-  // a cat sitting on the handrail
-  const kx = Math.round(W * 0.57);
-  ctx.fillStyle = "#0a0818";
-  ctx.fillRect(kx - 5, railTop - 6, 9, 8);        // body
-  ctx.fillRect(kx + 3, railTop - 9, 4, 6);        // head
-  ctx.fillRect(kx + 3, railTop - 11, 1.5, 3);     // ear
-  ctx.fillRect(kx + 6, railTop - 11, 1.5, 3);     // ear
-  ctx.fillRect(kx - 6, railTop - 3, 2, 5);        // tail
-
-  // multicolour fairy-light string draped along the handrail (lively, in view)
-  const gcol = ["#ff5aa8", "#ffcf6b", "#22d3ee", "#c084fc", "#7dd3fc", "#4dd0e1"];
-  ctx.strokeStyle = "rgba(120,100,70,0.35)";
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  for (let x = 0; x <= W; x += 3) {
-    const y = railTop + 3 + Math.abs(Math.sin(x / 22)) * 4;
-    x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-  }
+  ctx.moveTo(esx - 7, floor); ctx.lineTo(esx, floor - 24);
+  ctx.moveTo(esx + 7, floor); ctx.lineTo(esx, floor - 24);
+  ctx.moveTo(esx + 4, floor - 4); ctx.lineTo(esx + 9, floor);
   ctx.stroke();
-  for (let x = 6, i = 0; x < W; x += 15, i++) {
-    const y = railTop + 3 + Math.abs(Math.sin(x / 22)) * 4;
-    win(ctx, x - 1, y, 2.5, 2.5, gcol[i % gcol.length]);
+  ctx.fillStyle = "#2a2550"; ctx.fillRect(esx - 8, floor - 22, 16, 13);   // canvas
+  ctx.globalAlpha = 0.6; ctx.fillStyle = "#3fe0ff"; ctx.fillRect(esx - 7, floor - 21, 14, 5); ctx.globalAlpha = 1;
+  ctx.fillStyle = "#ff9ecb"; ctx.fillRect(esx - 7, floor - 15, 14, 4);
+
+  // camera on a tripod
+  const cvx = Math.round(W * 0.41);
+  shadow(cvx, 20);
+  ctx.strokeStyle = D;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(cvx, floor - 16); ctx.lineTo(cvx - 8, floor);
+  ctx.moveTo(cvx, floor - 16); ctx.lineTo(cvx + 8, floor);
+  ctx.moveTo(cvx, floor - 16); ctx.lineTo(cvx + 1, floor);
+  ctx.stroke();
+  ctx.fillStyle = "#1d1940";
+  ctx.fillRect(cvx - 8, floor - 24, 16, 8); // body
+  ctx.fillRect(cvx + 7, floor - 22, 4, 4);  // lens
+  ctx.fillStyle = "#ff5a5a"; ctx.fillRect(cvx - 6, floor - 23, 2, 2); // rec light
+
+  // beanbag / floor cushion
+  const bbx = Math.round(W * 0.47);
+  shadow(bbx, 22);
+  ctx.fillStyle = "#2a2550";
+  ctx.beginPath(); ctx.ellipse(bbx, floor - 3, 12, 6, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#332b5c";
+  ctx.beginPath(); ctx.ellipse(bbx, floor - 7, 9, 4, 0, 0, Math.PI * 2); ctx.fill();
+
+  // standing lantern (centre)
+  standLantern(Math.round(W * 0.53), "#ffb347");
+
+  // acoustic guitar leaning
+  const gtx = Math.round(W * 0.58);
+  shadow(gtx, 14);
+  ctx.strokeStyle = "#241a10"; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(gtx - 2, floor - 8); ctx.lineTo(gtx - 9, floor - 28); ctx.stroke(); // neck
+  ctx.fillStyle = "#5a3a1e";
+  ctx.beginPath(); ctx.ellipse(gtx, floor - 6, 7, 9, 0, 0, Math.PI * 2); ctx.fill(); // body
+  ctx.fillStyle = "#2a1a0e"; ctx.fillRect(gtx - 2, floor - 8, 4, 4); // sound hole
+
+  // director's chair
+  const dcx = Math.round(W * 0.63);
+  shadow(dcx, 18);
+  ctx.strokeStyle = D;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(dcx - 8, floor); ctx.lineTo(dcx + 5, floor - 15);
+  ctx.moveTo(dcx + 8, floor); ctx.lineTo(dcx - 5, floor - 15);
+  ctx.stroke();
+  ctx.fillStyle = "#241f4a";
+  ctx.fillRect(dcx - 8, floor - 16, 16, 3); // seat
+  ctx.fillRect(dcx - 8, floor - 25, 16, 3); // back
+
+  // stack of books
+  const bkx = Math.round(W * 0.68);
+  const books = ["#3b5a86", "#7a3b5a", "#b58a3a"];
+  for (let i = 0; i < 3; i++) {
+    ctx.fillStyle = books[i];
+    ctx.fillRect(bkx - 6 + i, floor - 3 - i * 3, 13 - i * 2, 3);
   }
+
+  // stool with a warm mug + steam
+  const stx = Math.round(W * 0.77);
+  shadow(stx, 14);
+  ctx.fillStyle = D;
+  ctx.fillRect(stx - 7, floor - 9, 14, 3); // top
+  ctx.fillRect(stx - 5, floor - 6, 2, 6); ctx.fillRect(stx + 3, floor - 6, 2, 6); // legs
+  glow(stx, floor - 13, 5);                // mug
+  ctx.globalAlpha = 0.22;
+  ctx.fillStyle = "#dfeaff";
+  ctx.fillRect(stx - 1, floor - 18, 1, 4); ctx.fillRect(stx + 2, floor - 20, 1, 4); // steam
+  ctx.globalAlpha = 1;
+
+  // telescope on a tripod, pointed at the sky
+  const tlx = Math.round(W * 0.83);
+  shadow(tlx, 16);
+  ctx.strokeStyle = D;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(tlx, floor - 11); ctx.lineTo(tlx - 6, floor);
+  ctx.moveTo(tlx, floor - 11); ctx.lineTo(tlx + 6, floor);
+  ctx.stroke();
+  ctx.strokeStyle = "#3a3470"; ctx.lineWidth = 4;
+  ctx.beginPath(); ctx.moveTo(tlx - 5, floor - 9); ctx.lineTo(tlx + 8, floor - 24); ctx.stroke(); // tube
+  ctx.fillStyle = "#2c2660"; ctx.fillRect(tlx + 6, floor - 26, 4, 4);
+
+  // round paper lantern resting on the ledge (right)
+  const plx = Math.round(W * 0.88);
+  glow(plx, floor - 8, 11);
+  ctx.fillStyle = "#ffcf6b"; ctx.fillRect(plx - 4, floor - 12, 8, 8);
+  ctx.fillStyle = "#ffe6a8"; ctx.fillRect(plx - 3, floor - 11, 6, 6);
+
+  // a cat curled on the handrail (a bit of charm)
+  const kx = Math.round(W * 0.72);
+  ctx.fillStyle = "#0a0818";
+  ctx.fillRect(kx - 7, railTop - 8, 12, 10);  // body
+  ctx.fillRect(kx + 4, railTop - 12, 5, 8);   // head
+  ctx.fillRect(kx + 4, railTop - 15, 2, 4);   // ear
+  ctx.fillRect(kx + 8, railTop - 15, 2, 4);   // ear
+  ctx.fillRect(kx - 8, railTop - 4, 2, 7);    // tail
 }
 
 // ---- moon: blocky PIXEL disc (per-pixel circle) + soft glow ----------------
@@ -1069,6 +1184,15 @@ function Scene({ scroll }) {
   const bh = Math.round(vh / 40) * 40;
   const mobile = vw < 700; // fewer baked signs on phones
 
+  // Landmarks are sized by viewport HEIGHT but positioned by viewport WIDTH.
+  // On desktop (wide) that's fine; on a tall/narrow phone the towers stay big
+  // yet bunch together and overlap. So ONLY on mobile: shrink them (narrower
+  // screens shrink a touch more) and widen their spread. Desktop is untouched.
+  const lmScale = mobile
+    ? Math.max(0.42, Math.min(0.6, (vw / vh) * 0.95))
+    : 1;
+  const lmSpread = mobile ? 1.2 : 1;
+
   const tex = useMemo(() => {
     const artW = Math.ceil((bw * OVER) / PX);
     const cityH = Math.ceil(((CITY_H + CITY_BLEED) * bh) / PX);
@@ -1134,9 +1258,9 @@ function Scene({ scroll }) {
           key={L.key}
           struct={tex.lm[L.key].struct}
           leds={tex.lm[L.key].leds}
-          x={vw * L.x}
-          w={vh * L.hFrac * L.aspect}
-          h={vh * L.hFrac}
+          x={vw * L.x * lmSpread}
+          w={vh * L.hFrac * L.aspect * lmScale}
+          h={vh * L.hFrac * lmScale}
           phase={L.phase}
           scroll={scroll}
         />
