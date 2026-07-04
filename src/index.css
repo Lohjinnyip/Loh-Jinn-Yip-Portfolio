@@ -682,17 +682,17 @@ img, video { display: block; max-width: 100%; }
 
 /* ---------- CONTACT ---------- */
 .contact {
-  /* black fills the section right up to the "CONTACT" eyebrow; only a thin top
-     strip feathers in from the scene above so there's no hard seam */
+  /* softly feathered black behind the contact content — a longer top fade and a
+     slightly more transparent fill let more of the scene show through */
   background: linear-gradient(180deg,
     rgba(5, 6, 15, 0) 0%,
-    rgba(5, 6, 15, 0.92) 10%,
-    rgba(5, 6, 15, 0.96) 30%,
-    rgba(5, 6, 15, 0.97) 100%);
+    rgba(5, 6, 15, 0.55) 14%,
+    rgba(5, 6, 15, 0.85) 34%,
+    rgba(5, 6, 15, 0.9) 100%);
   text-align: center;
   /* content sits near the bottom over the scene; a shorter min-height keeps the
      heading closer to the About section above (smaller empty gap). */
-  min-height: 50vh;
+  min-height: 44vh;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
