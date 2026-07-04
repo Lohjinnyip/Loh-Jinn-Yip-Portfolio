@@ -22,12 +22,15 @@
 //                     load, playback falls back to videoSrc (YouTube/Vimeo).
 //                     Tip: export/compress to 720p H.264 .mp4 before adding.
 //       description : (optional) short blurb shown in the player popup.
+//       vertical    : (optional) set `true` for portrait / 9:16 clips (e.g.
+//                     Reels, TikTok, Shorts). The player then opens in a tall
+//                     portrait frame instead of the default landscape 16:9 box.
 //
 // ============================================================================
 
 export const COMPANIES = [
   { id: "company-a", name: "Crave Asia", accent: "#38bdf8" }, // sky blue
-  { id: "company-b", name: "Company Two", accent: "#3b82f6" }, // blue
+  { id: "company-b", name: "Shipped Beyond", accent: "#3b82f6" }, // blue
   { id: "company-c", name: "Company Three", accent: "#60a5fa" }, // light blue
 ];
 
@@ -67,33 +70,80 @@ export const PROJECTS = [
   },
   {
     id: "p4",
-    title: "Kiosk Demo Reel",
+    title: "Prayer Bowl",
     company: "company-b",
-    category: "Product",
+    category: "Social",
     year: "2026",
     thumbnail: "",
+    // Vertical 1080x1920 (9:16) clip — `vertical: true` makes the player open
+    // in a portrait frame instead of the default 16:9 box.
+    vertical: true,
+    videoFile: "/videos/prayer-bowl-4.mp4",
     videoSrc: "",
-    description: "Screen-capture product walkthrough with animated callouts.",
+    description: "Vertical short-form edit (9:16) for Reels / TikTok / Shorts.",
+  },
+  // --- Shipped Beyond imports (all 1080x1920 / 9:16 → vertical: true) ---
+  // NOTE: titles/categories/years below are placeholders derived from the file
+  // names — rename them to the real project titles when you get a chance.
+  {
+    id: "sb-motion",
+    title: "Motion Light",
+    company: "company-b",
+    category: "Motion",
+    year: "2026",
+    thumbnail: "",
+    vertical: true,
+    videoFile: "/videos/Motion%20light%208.mp4",
+    videoSrc: "",
+    description: "",
   },
   {
-    id: "p5",
-    title: "Promo Campaign",
+    id: "sb-blender",
+    title: "Blender Render",
     company: "company-b",
-    category: "Ad",
+    category: "3D",
     year: "2025",
     thumbnail: "",
+    vertical: true,
+    videoFile: "/videos/blender%209.mp4",
     videoSrc: "",
-    description: "15s and 30s ad cutdowns for a paid campaign.",
+    description: "",
   },
   {
-    id: "p6",
-    title: "Event Aftermovie",
+    id: "sb-headlight",
+    title: "Headlight",
     company: "company-b",
-    category: "Event",
+    category: "Motion",
+    year: "2026",
+    thumbnail: "",
+    vertical: true,
+    videoFile: "/videos/headlight%206.mp4",
+    videoSrc: "",
+    description: "",
+  },
+  {
+    id: "sb-toolbox",
+    title: "Toolbox",
+    company: "company-b",
+    category: "Product",
     year: "2025",
     thumbnail: "",
+    vertical: true,
+    videoFile: "/videos/toolbox.mp4",
     videoSrc: "",
-    description: "High-energy recap edit synced to music.",
+    description: "",
+  },
+  {
+    id: "sb-1210",
+    title: "Short Reel",
+    company: "company-b",
+    category: "Social",
+    year: "2025",
+    thumbnail: "",
+    vertical: true,
+    videoFile: "/videos/1210-29.mp4",
+    videoSrc: "",
+    description: "",
   },
   {
     id: "p7",

@@ -30,6 +30,26 @@ const CITY_LIFT = 0.97;  // vertical parallax factor shared by city + landmarks
 const BAL_TOP = 0.76;    // viewport fraction of the handrail (top of balcony)
 const BAL_SPAN = 1.05;   // balcony plane height in viewport units (deck runs off-screen)
 
+// ── COVERAGE GUARANTEE ───────────────────────────────────────────────────────
+//  Why the background stays consistent no matter how much UI you add in front:
+//  the scene is position:fixed (covers only the viewport) and driven by
+//  NORMALISED scroll (0→1 over the whole page), so it always performs exactly
+//  ONE pan top→bottom. Adding sections spreads that pan over more scrolling —
+//  it never stretches the art and never overshoots its range.
+//
+//  The constants below make the "no gaps between the models" promise explicit.
+//  MAX_LIFT is the largest `lift` any band uses; MAX_TRAVEL is therefore the
+//  biggest upward pan (in vh fractions) any layer can make. Every covering band
+//  is sized/placed to still fill the screen — with COVER margin to spare — at
+//  both scroll extremes. If you tweak the parallax later, keep MAX_LIFT in sync
+//  and the dev-time check in Scene() will warn you the moment a gap could open.
+const MAX_LIFT = 1.04;                 // biggest `lift` passed to any <Band>
+const MAX_TRAVEL = SHIFT * MAX_LIFT;   // largest upward parallax pan (≈0.221 vh)
+const COVER = MAX_TRAVEL + 0.06;       // + margin for mouse-sway & rounding
+// Sky is the backstop behind everything: make it overhang the screen top & bottom
+// by COVER so it fills the viewport across the entire pan (span, centred on 0).
+const SKY_SPAN = Math.max(1.12, 1 + 2 * COVER);
+
 const SKY = { top: "#160f36", mid: "#2a1a55", horizon: "#452a6a", band: "#5f3880" };
 const NEON = ["#22d3ee", "#8be9fd", "#f472b6", "#ff5aa8", "#ffcf6b", "#c084fc", "#7dd3fc", "#4dd0e1"];
 
@@ -228,7 +248,7 @@ function building(ctx, x, y, w, h, cfg) {
   }
 }
 
-function cityDrawer(seed, minF, maxF, palette, density, dim) {
+function cityDrawer(seed, minF, maxF, palette, density, dim, signs) {
   return (ctx, W, H) => {
     ctx.clearRect(0, 0, W, H);
     const cfg = { rng: makeRng(seed), minF, maxF, density, dim, ...palette };
@@ -239,6 +259,17 @@ function cityDrawer(seed, minF, maxF, palette, density, dim) {
       building(ctx, x, H - h, w, h, cfg);
       x += w + 1 + Math.floor(cfg.rng() * 4);
     }
+    // Video-production signs: draw a controlled host building at each slot and
+    // stamp the sign on its ACTUAL rooftop, so every sign is part of the city
+    // and sits on a real building (never floats, never a lone skinny tower).
+    if (signs)
+      for (const s of signs) {
+        const fx = Math.round(s.atFrac * W);
+        const fw = s.hostW;
+        const fh = Math.round(s.hostHFrac * H);
+        featureHost(ctx, Math.round(fx - fw / 2), H - fh, fw, fh, cfg, s.film);
+        s.sign(ctx, fx, H - fh); // roof top = H - fh
+      }
   };
 }
 
@@ -299,10 +330,27 @@ function drawKLTower(ctx, W, H, led) {
     ctx.fillRect(cx - 1, antTip, 2, 3);
   } else {
     ctx.fillStyle = "#fff";
-    for (let dx = -headW / 2 + 2; dx <= headW / 2 - 2; dx += 3.2) ledDot(ctx, cx + dx, gallery, 1.1);
-    ledLine(ctx, [[cx - shaftTopW / 2, headBot], [cx - headW / 2, gallery], [cx - headW * 0.34, headTop + 2]], 1.1);
-    ledLine(ctx, [[cx + shaftTopW / 2, headBot], [cx + headW / 2, gallery], [cx + headW * 0.34, headTop + 2]], 1.1);
-    ledLine(ctx, [[cx - headW / 2, gallery + 2], [cx + headW / 2, gallery + 2]], 1.0);
+    const galL = cx - headW / 2, galR = cx + headW / 2;
+    const crown = headTop + 1;
+
+    // 1) flared underside: shaft top curves OUT to the gallery rim (two soft
+    //    segments instead of one straight edge, so it reads as a cone, not a "<")
+    ledLine(ctx, [[cx - shaftTopW / 2, headBot], [cx - headW * 0.44, gallery + 1.5], [galL, gallery]], 1.1);
+    ledLine(ctx, [[cx + shaftTopW / 2, headBot], [cx + headW * 0.44, gallery + 1.5], [galR, gallery]], 1.1);
+
+    // 2) domed crown: the rim wraps up and OVER to a rounded top — this closes
+    //    the silhouette into a pod so the two sides no longer look like arrows
+    ledLine(ctx, [
+      [galL, gallery], [cx - headW * 0.3, crown + 1.5],
+      [cx, crown - 2.5], [cx + headW * 0.3, crown + 1.5], [galR, gallery],
+    ], 1.1);
+
+    // 3) observation deck: a gently curved ring line + a row of deck lights
+    ledLine(ctx, [[galL, gallery + 0.5], [cx, gallery + 2.5], [galR, gallery + 0.5]], 1.0);
+    for (let dx = -headW / 2 + 3; dx <= headW / 2 - 3; dx += 3.4) ledDot(ctx, cx + dx, gallery + 1, 1.0);
+
+    // slim antenna accent rising from the crown + the ground line
+    ledLine(ctx, [[cx, crown - 2.5], [cx, headTop * 0.5]], 0.6);
     ledLine(ctx, [[cx - shaftBotW / 2, b - 2], [cx + shaftBotW / 2, b - 2]], 1.2);
   }
 }
@@ -773,16 +821,258 @@ const LANDMARKS = [
   { key: "kltower", draw: drawKLTower, hFrac: 0.6, aspect: 0.28, x: 0.4, phase: 0.7 },
 ];
 
+// ============================================================================
+//  VIDEO-PRODUCTION DECOR — "video editor / content creator" cues drawn in the
+//  SAME chunky pixel style and on the SAME PX grid as the buildings. The rooftop
+//  signs are BAKED INTO the near-city band on controlled host buildings (see
+//  cityDrawer), so each one sits on a real rooftop and rides the city parallax —
+//  it can never float. Only the thin editing-timeline (with a slow playhead) is a
+//  separate mesh. Canvas textures (ss=1, NearestFilter), no new lights, no
+//  post-processing. Kept clear of the hero card + the three landmarks.
+// ============================================================================
+
+// chunky (non-antialiased) pixel play triangle
+function pxPlay(ctx, x, y, w, h, color) {
+  ctx.fillStyle = color;
+  const tw = Math.round(w * 0.82), px = x + Math.round((w - tw) / 2);
+  for (let r = 0; r < h; r++) {
+    const f = 1 - Math.abs(r - (h - 1) / 2) / ((h - 1) / 2 || 1);
+    ctx.fillRect(px, y + r, Math.max(1, Math.round(f * tw)), 1);
+  }
+}
+// chunky pixel camera outline
+function pxCamera(ctx, x, y, w, h, color) {
+  ctx.fillStyle = color;
+  const bw = Math.round(w * 0.72), bh = Math.round(h * 0.72), bx = x, by = y + h - bh;
+  ctx.fillRect(bx, by, bw, 1);
+  ctx.fillRect(bx, by + bh - 1, bw, 1);
+  ctx.fillRect(bx, by, 1, bh);
+  ctx.fillRect(bx + bw - 1, by, 1, bh);
+  ctx.fillRect(bx + 2, by - 1, 3, 1); // viewfinder bump
+  ctx.fillRect(bx + Math.round(bw * 0.32), by + Math.round(bh * 0.32), 2, 2); // lens
+  ctx.fillRect(bx + bw, by + Math.round(bh * 0.3), 2, Math.max(1, Math.round(bh * 0.4))); // barrel
+}
+
+// --- sign faces (texel units, 1px hard neon). `iconCol` lets the play triangle
+//     be lighter than its magenta frame. ---
+function faceScreen(drawIcon, iconCol) {
+  return (ctx, sx, sy, sw, sh, color) => {
+    ctx.fillStyle = "#0b0a1a";
+    ctx.fillRect(sx, sy, sw, sh);
+    ctx.fillStyle = color;
+    ctx.fillRect(sx, sy, sw, 1);
+    ctx.fillRect(sx, sy + sh - 1, sw, 1);
+    ctx.fillRect(sx, sy, 1, sh);
+    ctx.fillRect(sx + sw - 1, sy, 1, sh);
+    drawIcon(ctx, sx + 2, sy + 2, sw - 4, sh - 4, iconCol || color);
+  };
+}
+function faceClapper(ctx, sx, sy, sw, sh, color) {
+  ctx.fillStyle = "#0e0c20"; // board
+  ctx.fillRect(sx, sy + 2, sw, sh - 2);
+  ctx.fillStyle = "#e9e6f5"; // stick
+  ctx.fillRect(sx, sy, sw, 2);
+  ctx.fillStyle = "#1a1730"; // stripes
+  for (let i = 0; i < sw; i += 4) ctx.fillRect(sx + i, sy, 2, 2);
+  ctx.fillStyle = color; // neon edge
+  ctx.fillRect(sx, sy, sw, 1);
+  ctx.fillRect(sx, sy + sh - 1, sw, 1);
+  ctx.fillRect(sx, sy + 2, 1, sh - 2);
+  ctx.fillRect(sx + sw - 1, sy + 2, 1, sh - 2);
+  ctx.globalAlpha = 0.5; // board lines
+  ctx.fillRect(sx + 2, sy + 5, sw - 4, 1);
+  ctx.fillRect(sx + 2, sy + 8, sw - 4, 1);
+  ctx.globalAlpha = 1;
+}
+function faceMini(variant) {
+  const pal = variant === 0
+    ? { sky: "#243b6b", sun: "#7dd3fc", m: "#3b82f6" }
+    : { sky: "#3a1f4d", sun: "#ffcf6b", m: "#ff5aa8" };
+  return (ctx, sx, sy, sw, sh, color) => {
+    ctx.fillStyle = "#0b0a1a";
+    ctx.fillRect(sx, sy, sw, sh);
+    ctx.fillStyle = pal.sky; // sky band
+    ctx.fillRect(sx + 1, sy + 1, sw - 2, Math.round(sh * 0.5));
+    ctx.fillStyle = pal.sun; // sun
+    ctx.fillRect(sx + sw - 4, sy + 2, 2, 2);
+    ctx.fillStyle = pal.m; // mountain (stacked rows)
+    const mh = Math.round(sh * 0.5);
+    for (let r = 0; r < mh; r++) ctx.fillRect(sx + 1, sy + sh - 1 - r, Math.min(sw - 2, r + 2), 1);
+    ctx.fillStyle = color; // neon frame
+    ctx.fillRect(sx, sy, sw, 1);
+    ctx.fillRect(sx, sy + sh - 1, sw, 1);
+    ctx.fillRect(sx, sy, 1, sh);
+    ctx.fillRect(sx + sw - 1, sy, 1, sh);
+  };
+}
+
+// subtle sprocket-hole film strip made of tiny illuminated windows (item 4)
+function createFilmWindowColumn(ctx, x, y, h) {
+  for (let yy = y; yy < y + h; yy += 4) {
+    ctx.globalAlpha = 0.8; // sprocket holes
+    ctx.fillStyle = "#ffd27a";
+    ctx.fillRect(x, yy, 1, 1);
+    ctx.fillRect(x + 4, yy, 1, 1);
+    ctx.globalAlpha = 1;
+    win(ctx, x + 1, yy, 2, 2, "#8be9fd"); // frame cell
+  }
+}
+
+// plain flat-roof host building (clean roof for a sign) with windows + optional
+// film-strip column. Drawn in the band's own texel units → 1:1 with the city.
+function featureHost(ctx, x, y, w, h, cfg, film) {
+  const shade = Math.max(3, Math.round(w * 0.16));
+  ctx.fillStyle = cfg.body;
+  ctx.fillRect(x, y, w, h);
+  ctx.fillStyle = cfg.bodyR;
+  ctx.fillRect(x + w - shade, y, shade, h);
+  ctx.fillStyle = cfg.edge;
+  ctx.fillRect(x, y, w, 2);
+  for (let wy = y + 5; wy < y + h - 3; wy += 6)
+    for (let wx = x + 3; wx < x + w - 4; wx += 5)
+      if (cfg.rng() < 0.5) win(ctx, wx, wy, 2, 3, pick(cfg.rng, NEON));
+  if (film) createFilmWindowColumn(ctx, x + 3, y + 10, h - 18);
+}
+
+// returns a stamp fn that draws a small sign face + support post + chunky halo,
+// resting its bottom on the given rooftop y (texel units)
+function stampSign(sw, sh, col, drawFace) {
+  return (ctx, cx, roofY) => {
+    const x = Math.round(cx - sw / 2), y = Math.round(roofY - sh - 2);
+    ctx.fillStyle = "#0c0a18"; // short support post onto the roof
+    ctx.fillRect(Math.round(cx) - 1, y + sh, 2, 3);
+    ctx.globalAlpha = 0.15; // chunky pixel halo (no soft gradient)
+    ctx.fillStyle = col;
+    ctx.fillRect(x - 2, y - 1, sw + 4, sh + 3);
+    ctx.globalAlpha = 1;
+    drawFace(ctx, x, y, sw, sh, col);
+  };
+}
+
+// Near-band sign slots. atFrac = x across the band texture; hostHFrac = host
+// building height (band fraction) → controls the rooftop height; film = add a
+// film-strip column to that host's face. Positions dodge the card + landmarks.
+const SIGN_SLOTS = [
+  { id: "play", atFrac: 0.745, hostW: 30, hostHFrac: 0.44, film: true,
+    sign: stampSign(15, 11, "#ff3ea5", faceScreen(pxPlay, "#ffd6ec")) }, // Petronas–KL gap
+  { id: "camera", atFrac: 0.885, hostW: 26, hostHFrac: 0.38, film: true,
+    sign: stampSign(13, 10, "#22d3ee", faceScreen(pxCamera, "#bdf3ff")) }, // right of KL Tower
+  { id: "clapper", atFrac: 0.11, hostW: 24, hostHFrac: 0.24,
+    sign: stampSign(13, 11, "#c084fc", faceClapper) }, // far left, low
+  { id: "miniA", atFrac: 0.04, hostW: 26, hostHFrac: 0.22,
+    sign: stampSign(16, 11, "#7dd3fc", faceMini(0)) }, // far lower-left
+  { id: "miniB", atFrac: 0.955, hostW: 26, hostHFrac: 0.22,
+    sign: stampSign(16, 11, "#ffcf6b", faceMini(1)) }, // far lower-right
+];
+// mobile: keep only the play billboard (item 6)
+const MOBILE_SLOTS = SIGN_SLOTS.filter((s) => s.id === "play");
+
+// --- thin editing timeline (a light rail at the cityline) + its playhead ---
+function drawTimelineStrip(ctx, W, H) {
+  ctx.clearRect(0, 0, W, H);
+  const tH = 4, tY = H - tH; // thin track at the bottom of the texture
+  ctx.fillStyle = "#0e0c20";
+  ctx.fillRect(0, tY, W, tH);
+  ctx.globalAlpha = 0.45; // faint lit top edge
+  ctx.fillStyle = "#3fe0ff";
+  ctx.fillRect(0, tY, W, 1);
+  ctx.globalAlpha = 1;
+  // fill the full width with varied clip blocks (occasional small yellow section)
+  const cols = ["#22d3ee", "#3b82f6", "#c084fc", "#ff5aa8"];
+  const rng = makeRng(20);
+  let x = 0, i = 0;
+  while (x < W) {
+    const yellow = i % 9 === 4;
+    const bw = yellow ? 4 + Math.floor(rng() * 4) : 10 + Math.floor(rng() * 22);
+    ctx.globalAlpha = 0.8;
+    ctx.fillStyle = yellow ? "#ffcf6b" : cols[i % cols.length];
+    ctx.fillRect(x + 1, tY + 1, Math.min(bw, W - x - 2), tH - 1);
+    ctx.globalAlpha = 1;
+    x += bw + 2;
+    i++;
+  }
+}
+function drawPlayheadDown(ctx, W, H) {
+  ctx.clearRect(0, 0, W, H);
+  const cx = Math.round(W / 2);
+  ctx.fillStyle = "#ffffff";
+  for (let r = 0; r < 3; r++) ctx.fillRect(cx - (2 - r), r, (2 - r) * 2 + 1, 1); // ▼ marker
+  ctx.fillRect(cx, 3, 1, H - 3); // thin vertical line
+}
+
+// timeline: screen height fraction + width fraction (>1 = full-bleed past edges)
+const TL_YF = 0.745, TL_WFRAC = 1.3;
+
+// Thin editing-timeline light rail near the cityline + a slow playhead. Anchored
+// in world coordinates, riding the near-city parallax. Hidden on small screens.
+function EditingTimeline({ scroll }) {
+  const { viewport } = useThree();
+  const vw = viewport.width, vh = viewport.height;
+  const bw = Math.round(vw / 40) * 40;
+  const mobile = vw < 700;
+  const pxW = (vw * OVER) / Math.ceil((bw * OVER) / PX); // 1:1 with city texels
+
+  const reduced = useMemo(
+    () => window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false,
+    []
+  );
+
+  const railTex = useMemo(() => {
+    const w = Math.max(60, Math.round((bw * TL_WFRAC) / PX));
+    return makeTex(w, 6, drawTimelineStrip, 1);
+  }, [bw]);
+  const phTex = useMemo(() => makeTex(5, 9, drawPlayheadDown, 1), []);
+  useEffect(() => () => (railTex.dispose(), phTex.dispose()), [railTex, phTex]);
+
+  const tlRef = useRef(null);
+  const phRef = useRef(null);
+  const railW = railTex.image.width * pxW;
+  const railH = railTex.image.height * pxW;
+  const cy = vh * 0.5 - TL_YF * vh - railH / 2;
+  const phW = phTex.image.width * pxW;
+  const phH = phTex.image.height * pxW;
+
+  useFrame((state) => {
+    const sy = scroll.current * SHIFT * vh * 1.02; // ride the lower city
+    const px = state.pointer.x * vw * 0.01 * 0.9;
+    if (tlRef.current) {
+      tlRef.current.position.x = px;
+      tlRef.current.position.y = cy + sy;
+    }
+    if (phRef.current) {
+      const half = railW * 0.5 - pxW;
+      const frac = reduced ? 0.3 : (state.clock.elapsedTime * 0.045) % 1; // ~22s loop
+      phRef.current.position.x = -half + frac * half * 2;
+    }
+  });
+
+  if (mobile) return null; // simplify on phones
+
+  return (
+    <group ref={tlRef} position={[0, cy, 0]}>
+      <mesh renderOrder={4.5}>
+        <planeGeometry args={[railW, railH]} />
+        <meshBasicMaterial map={railTex} transparent depthTest={false} depthWrite={false} toneMapped={false} />
+      </mesh>
+      <mesh ref={phRef} renderOrder={4.55} position={[0, 0, 0.1]}>
+        <planeGeometry args={[phW, phH]} />
+        <meshBasicMaterial map={phTex} transparent depthTest={false} depthWrite={false} toneMapped={false} />
+      </mesh>
+    </group>
+  );
+}
+
 function Scene({ scroll }) {
   const { viewport } = useThree();
   const vw = viewport.width, vh = viewport.height;
   const bw = Math.round(vw / 40) * 40;
   const bh = Math.round(vh / 40) * 40;
+  const mobile = vw < 700; // fewer baked signs on phones
 
   const tex = useMemo(() => {
     const artW = Math.ceil((bw * OVER) / PX);
     const cityH = Math.ceil(((CITY_H + CITY_BLEED) * bh) / PX);
-    const skyH = Math.ceil((1.12 * bh) / PX);
+    const skyH = Math.ceil((SKY_SPAN * bh) / PX);
     const balH = Math.ceil((BAL_SPAN * bh) / PX);
     const near = { body: "#0e0b22", bodyR: "#070512", edge: "#1c1838", roof: "#3a4270" };
     const mid = { body: "#171334", bodyR: "#0d0a22", edge: "#2a2650", roof: "#3a4270" };
@@ -792,7 +1082,7 @@ function Scene({ scroll }) {
       // shorter buildings (lower max-height fraction = fewer floors, not squashed)
       far: makeTex(artW, cityH, cityDrawer(21, 0.22, 0.58, far, 0.24, 0.24)),
       mid: makeTex(artW, cityH, cityDrawer(88, 0.18, 0.44, mid, 0.5, 0.32)),
-      near: makeTex(artW, cityH, cityDrawer(303, 0.14, 0.36, near, 0.42, 0.3)),
+      near: makeTex(artW, cityH, cityDrawer(303, 0.14, 0.36, near, 0.42, 0.3, mobile ? MOBILE_SLOTS : SIGN_SLOTS)),
       balcony: makeTex(artW, balH, drawBalcony),
       lm: {},
     };
@@ -805,7 +1095,7 @@ function Scene({ scroll }) {
       };
     });
     return t;
-  }, [bw, bh]);
+  }, [bw, bh, mobile]);
 
   useEffect(() => () => {
     [tex.sky, tex.far, tex.mid, tex.near, tex.balcony].forEach((t) => t.dispose && t.dispose());
@@ -814,10 +1104,27 @@ function Scene({ scroll }) {
 
   const cityTop = ROOF0 - CITY_H;
   const cityBot = ROOF0 + CITY_BLEED;
+
+  // Dev-only guard: verify the two coverage invariants that keep the scene
+  // gap-free as you add UI / retune parallax. Fires once; silent in production.
+  useEffect(() => {
+    if (!import.meta.env?.DEV) return;
+    const warn = (m) => console.warn(`[CityBackground coverage] ${m}`);
+    // 1) Balcony must overlap the city band (so no sky gap appears above the deck),
+    //    even after the two layers drift apart across a full scroll.
+    const balCityOverlap = cityBot - BAL_TOP - SHIFT * (MAX_LIFT - 1.0);
+    if (balCityOverlap <= 0)
+      warn(`balcony no longer overlaps the city (overlap ${balCityOverlap.toFixed(3)}vh ≤ 0). ` +
+        `Lower BAL_TOP or raise CITY_BLEED so BAL_TOP < ROOF0 + CITY_BLEED.`);
+    // 2) Sky (the backstop) must still fill the screen top→bottom at the pan extreme.
+    if (SKY_SPAN / 2 < 0.5 + SHIFT * 0.15)
+      warn(`sky no longer covers the viewport at full scroll — increase SKY_SPAN.`);
+  }, []);
+
   return (
     <>
       <color attach="background" args={[SKY.top]} />
-      <Band tex={tex.sky} top0={-0.06} bot0={1.06} order={0} lift={0.15} sway={0.3} scroll={scroll} />
+      <Band tex={tex.sky} top0={-(SKY_SPAN - 1) / 2} bot0={1 + (SKY_SPAN - 1) / 2} order={0} lift={0.15} sway={0.3} scroll={scroll} />
       <StarField scroll={scroll} />
       <Moon x={vw * 0.3} y={vh * 0.3} size={vh * 0.2} scroll={scroll} vh={vh} />
       <Band tex={tex.far} top0={cityTop} bot0={cityBot} order={1} lift={0.9} sway={0.5} scroll={scroll} />
@@ -835,6 +1142,7 @@ function Scene({ scroll }) {
         />
       ))}
       <Band tex={tex.near} top0={cityTop} bot0={cityBot} order={4} lift={1.04} sway={0.9} scroll={scroll} />
+      <EditingTimeline scroll={scroll} />
       <Band tex={tex.balcony} top0={BAL_TOP} bot0={BAL_TOP + BAL_SPAN} order={5} lift={1.0} sway={1.1} scroll={scroll} />
     </>
   );

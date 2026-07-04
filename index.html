@@ -5,12 +5,36 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Loh Jinn Yip — Video Editor & Content Creator portfolio" />
+
+    <!-- Critical inline styles: paint a dark background on the VERY FIRST frame,
+         before the JS bundle / external CSS load, so there is no white flash. -->
+    <style>
+      /* html is the dark backstop (kills the white flash). body MUST stay
+         transparent — the Three.js scene sits at z-index:-2 and an opaque body
+         background would paint over and hide it. */
+      html { background: #05060f; color-scheme: dark; }
+      body { margin: 0; background: transparent; }
+      #root { min-height: 100vh; }
+    </style>
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Load fonts asynchronously so they DON'T block the first paint. The
+         preload+onload swap flips it to a stylesheet once fetched; <noscript>
+         covers the no-JS case. `display=swap` shows text immediately meanwhile. -->
     <link
+      rel="preload"
+      as="style"
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap"
-      rel="stylesheet"
+      onload="this.onload=null;this.rel='stylesheet'"
     />
+    <noscript>
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+      />
+    </noscript>
+
     <title>Loh Jinn Yip — Video Editor & Content Creator</title>
   </head>
   <body>
