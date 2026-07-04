@@ -502,8 +502,8 @@ function drawBalcony(ctx, W, H) {
 
   // --- glass balustrade: framed top+bottom rails + regular posts (no open gap) ---
   const glassTop = railTop + handH, glassBot = capY, glassH = glassBot - glassTop;
-  ctx.globalAlpha = 0.1; // glass tint — darker/deeper so it reads as smoked glass
-  ctx.fillStyle = "#1d4a63";
+  ctx.globalAlpha = 0.2; // glass tint — brighter so it reads as lit glass
+  ctx.fillStyle = "#7fe0ff";
   ctx.fillRect(0, glassTop, W, glassH);
   ctx.globalAlpha = 1;
   // posts (closer together) + a soft reflection streak on each panel
