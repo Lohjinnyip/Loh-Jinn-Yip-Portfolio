@@ -23,7 +23,7 @@ const COMPOSE = {
   mailto: `mailto:${EMAIL}?subject=${enc(MAIL_SUBJECT)}&body=${enc(MAIL_BODY)}`,
 };
 
-const YOUTUBE_URL = "#"; // paste your YouTube channel URL
+const YOUTUBE_URL = "https://www.youtube.com/channel/UCavSz1JhkP8J_3v2-isu_ag";
 
 const MailIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

@@ -21,10 +21,14 @@ const PX = 4;            // art-pixel size (screen px per texel) → chunky pixe
 const OVER = 1.25;       // horizontal overscan for parallax room
 const ROOF0 = 0.85;      // roofline (viewport fraction) at top of page
 const ROOF1 = 0.6;       // roofline at bottom of page
-const SHIFT = ROOF0 - ROOF1;
+// vertical parallax travel over a full-page scroll; 0.85 = ~15% slower feel
+const SHIFT = (ROOF0 - ROOF1) * 0.85;
 const CITY_H = 0.5;      // city band ≈ 50% of viewport
-const CITY_BLEED = 0.08; // city extends below the roofline (hidden by balcony)
+const CITY_BLEED = 0.1; // city extends below the roofline (hidden by balcony)
 const CITY_LIFT = 0.97;  // vertical parallax factor shared by city + landmarks
+// balcony: railing rises above the rooftop edge; deck fills below
+const BAL_TOP = 0.76;    // viewport fraction of the handrail (top of balcony)
+const BAL_SPAN = 1.05;   // balcony plane height in viewport units (deck runs off-screen)
 
 const SKY = { top: "#160f36", mid: "#2a1a55", horizon: "#452a6a", band: "#5f3880" };
 const NEON = ["#22d3ee", "#8be9fd", "#f472b6", "#ff5aa8", "#ffcf6b", "#c084fc", "#7dd3fc", "#4dd0e1"];
@@ -430,46 +434,65 @@ function drawPetronas(ctx, W, H, led) {
 // ---- balcony: railing + props + string lights, long dark floor -------------
 function drawBalcony(ctx, W, H) {
   ctx.clearRect(0, 0, W, H);
-  const floorY = 34, railTop = 6;
-  const fg = ctx.createLinearGradient(0, floorY, 0, H);
-  fg.addColorStop(0, "#0b0917");
+  // layout in art px: handrail near the top, balusters down to the parapet cap,
+  // then the solid deck fills the rest (the surface you'd stand on)
+  const railTop = 11, handH = 5, midY = 27, capY = 42;
+
+  // --- solid deck / parapet (foreground surface) ---
+  const fg = ctx.createLinearGradient(0, capY, 0, H);
+  fg.addColorStop(0, "#100d20");
   fg.addColorStop(1, "#050409");
   ctx.fillStyle = fg;
-  ctx.fillRect(0, floorY, W, H - floorY);
-  ctx.fillStyle = "#171430";
-  ctx.fillRect(0, floorY, W, 2);
-  ctx.strokeStyle = "rgba(60,50,110,0.18)";
+  ctx.fillRect(0, capY, W, H - capY);
+  // parapet cap: lit concrete ledge the railing mounts on
+  ctx.fillStyle = "#2b2656";
+  ctx.fillRect(0, capY, W, 4);
+  ctx.globalAlpha = 0.6;
+  ctx.fillStyle = "#5a54a0";
+  ctx.fillRect(0, capY, W, 1.5);
+  ctx.globalAlpha = 1;
+  // deck perspective lines for depth
+  ctx.strokeStyle = "rgba(74,64,124,0.16)";
   ctx.lineWidth = 1;
-  for (let i = 1; i <= 4; i++) {
-    const y = floorY + i * ((H - floorY) / 6);
+  for (let i = 1; i <= 5; i++) {
+    const y = capY + 6 + i * ((H - capY) / 8);
     ctx.beginPath();
     ctx.moveTo(0, y);
     ctx.lineTo(W, y);
     ctx.stroke();
   }
-  // railing
-  ctx.fillStyle = "#0a0818";
-  ctx.fillRect(0, railTop, W, 5);
-  ctx.fillStyle = "#2a2456";
+
+  // --- railing: balusters between handrail and cap, city glows through gaps --
+  const balBot = capY;
+  for (let x = 9; x < W - 3; x += 14) {
+    ctx.fillStyle = "#1a1638";
+    ctx.fillRect(x, railTop + handH, 4, balBot - (railTop + handH));
+    ctx.fillStyle = "#2c2660"; // baluster highlight edge
+    ctx.fillRect(x, railTop + handH, 1.5, balBot - (railTop + handH));
+  }
+  // mid rail
+  ctx.fillStyle = "#141130";
+  ctx.fillRect(0, midY, W, 3);
+  // handrail
+  ctx.fillStyle = "#0f0d24";
+  ctx.fillRect(0, railTop, W, handH);
+  // neon-lit top edge of the handrail
   ctx.globalAlpha = 0.6;
+  ctx.fillStyle = "#3fe0ff";
   ctx.fillRect(0, railTop, W, 1.5);
   ctx.globalAlpha = 1;
-  ctx.fillRect(0, floorY - 6, W, 3);
-  for (let x = 8; x < W; x += 16) {
-    ctx.fillStyle = "#12102a";
-    ctx.fillRect(x, railTop + 4, 3, floorY - railTop - 8);
-  }
-  // bistro string lights
-  ctx.strokeStyle = "rgba(120,100,70,0.5)";
+
+  // --- bistro string lights strung above the handrail ---
+  ctx.strokeStyle = "rgba(120,100,70,0.45)";
   ctx.lineWidth = 1;
   ctx.beginPath();
   for (let x = 0; x <= W; x += 4) {
-    const y = 6 + Math.sin((x / W) * Math.PI * 8) * 2;
+    const y = 4 + Math.sin((x / W) * Math.PI * 9) * 2.5;
     x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
   }
   ctx.stroke();
-  for (let x = 20; x < W; x += 46) {
-    const y = 8 + Math.sin((x / W) * Math.PI * 8) * 2;
+  for (let x = 18; x < W; x += 44) {
+    const y = 6 + Math.sin((x / W) * Math.PI * 9) * 2.5;
     ctx.globalAlpha = 0.3;
     ctx.fillStyle = "#ffd27a";
     ctx.fillRect(x - 1.5, y - 1.5, 4, 4);
@@ -477,29 +500,93 @@ function drawBalcony(ctx, W, H) {
     ctx.fillStyle = "#ffe6a8";
     ctx.fillRect(x, y, 2, 2);
   }
+
+  // --- props on the deck (in front of the railing) ---
   // potted plant, left
-  const px = Math.round(W * 0.12);
+  const px = Math.round(W * 0.15);
   ctx.fillStyle = "#0d1a12";
-  for (let i = 0; i < 7; i++) ctx.fillRect(px + (i - 3) * 3, floorY - 20 - (3 - Math.abs(i - 3)) * 3, 2, 20);
-  ctx.fillStyle = "#14102a";
+  for (let i = 0; i < 7; i++) ctx.fillRect(px + (i - 3) * 3, capY - 4 - (3 - Math.abs(i - 3)) * 3, 2, 16);
+  ctx.fillStyle = "#15112c";
   ctx.beginPath();
-  ctx.moveTo(px - 7, floorY);
-  ctx.lineTo(px + 7, floorY);
-  ctx.lineTo(px + 5, floorY - 8);
-  ctx.lineTo(px - 5, floorY - 8);
+  ctx.moveTo(px - 8, capY + 12);
+  ctx.lineTo(px + 8, capY + 12);
+  ctx.lineTo(px + 6, capY - 2);
+  ctx.lineTo(px - 6, capY - 2);
   ctx.fill();
-  // AC units + vent pipe, right
-  const ax = Math.round(W * 0.8);
+  // warm glowing lantern on a slim stand (cosy focal point)
+  const lx = Math.round(W * 0.31);
+  ctx.fillStyle = "#171433";
+  ctx.fillRect(lx - 2, capY + 2, 4, 16);
+  ctx.fillRect(lx - 6, capY + 16, 12, 3);
+  win(ctx, lx - 5, capY - 8, 10, 10, "#ffcf6b");
+  // AC condenser units, right
+  const ax = Math.round(W * 0.82);
   ctx.fillStyle = "#14122a";
   for (let i = 0; i < 2; i++) {
-    const bx = ax + i * 34;
-    ctx.fillRect(bx, floorY - 20, 28, 20);
+    const bx = ax + i * 36;
+    ctx.fillRect(bx, capY + 2, 30, 18);
     ctx.strokeStyle = "#2a2650";
-    ctx.strokeRect(bx + 4, floorY - 16, 20, 12);
+    ctx.strokeRect(bx + 4, capY + 6, 22, 10);
   }
-  ctx.fillStyle = "#100e22";
-  ctx.fillRect(ax - 12, floorY - 30, 5, 30);
-  ctx.fillRect(ax - 12, floorY - 30, 14, 4);
+
+  // small leafy plant (pot + fronds)
+  const plant = (x, base, hgt, n, col) => {
+    ctx.fillStyle = col;
+    for (let i = 0; i < n; i++)
+      ctx.fillRect(x + (i - (n - 1) / 2) * 3, base - hgt + Math.abs(i - (n - 1) / 2) * 2, 2, hgt - Math.abs(i - (n - 1) / 2) * 2);
+    ctx.fillStyle = "#15112c";
+    ctx.fillRect(x - 5, base - 2, 10, 9);
+  };
+  plant(Math.round(W * 0.08), capY + 12, 14, 7, "#0d1a12");
+  plant(Math.round(W * 0.66), capY + 14, 26, 9, "#0e1c14"); // tall one
+  plant(Math.round(W * 0.9), capY + 12, 12, 5, "#0d1a12");
+
+  // bistro table + two chairs + a candle glow
+  const tx = Math.round(W * 0.25), td = capY + 17;
+  ctx.fillStyle = "#171433";
+  ctx.fillRect(tx - 17, td - 12, 3, 14); ctx.fillRect(tx - 18, td - 13, 7, 3); // left chair
+  ctx.fillRect(tx + 14, td - 12, 3, 14); ctx.fillRect(tx + 11, td - 13, 7, 3); // right chair
+  ctx.fillRect(tx - 2, td - 9, 4, 11);   // table pedestal
+  ctx.fillRect(tx - 10, td - 11, 20, 3); // table top
+  win(ctx, tx - 1, td - 17, 3, 4, "#ffcf6b"); // candle
+
+  // lounge chair (reclined silhouette)
+  const lc = Math.round(W * 0.45), lb = capY + 18;
+  ctx.fillStyle = "#171433";
+  ctx.beginPath();
+  ctx.moveTo(lc - 16, lb);
+  ctx.lineTo(lc + 12, lb);
+  ctx.lineTo(lc + 12, lb - 4);
+  ctx.lineTo(lc - 4, lb - 5);
+  ctx.lineTo(lc - 16, lb - 15);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillRect(lc - 15, lb, 3, 6);
+  ctx.fillRect(lc + 8, lb, 3, 6);
+
+  // a cat sitting on the handrail
+  const kx = Math.round(W * 0.57);
+  ctx.fillStyle = "#0a0818";
+  ctx.fillRect(kx - 5, railTop - 6, 9, 8);        // body
+  ctx.fillRect(kx + 3, railTop - 9, 4, 6);        // head
+  ctx.fillRect(kx + 3, railTop - 11, 1.5, 3);     // ear
+  ctx.fillRect(kx + 6, railTop - 11, 1.5, 3);     // ear
+  ctx.fillRect(kx - 6, railTop - 3, 2, 5);        // tail
+
+  // multicolour fairy-light string draped along the handrail (lively, in view)
+  const gcol = ["#ff5aa8", "#ffcf6b", "#22d3ee", "#c084fc", "#7dd3fc", "#4dd0e1"];
+  ctx.strokeStyle = "rgba(120,100,70,0.35)";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  for (let x = 0; x <= W; x += 3) {
+    const y = railTop + 3 + Math.abs(Math.sin(x / 22)) * 4;
+    x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+  for (let x = 6, i = 0; x < W; x += 15, i++) {
+    const y = railTop + 3 + Math.abs(Math.sin(x / 22)) * 4;
+    win(ctx, x - 1, y, 2.5, 2.5, gcol[i % gcol.length]);
+  }
 }
 
 // ---- moon: blocky PIXEL disc (per-pixel circle) + soft glow ----------------
@@ -696,15 +783,16 @@ function Scene({ scroll }) {
     const artW = Math.ceil((bw * OVER) / PX);
     const cityH = Math.ceil(((CITY_H + CITY_BLEED) * bh) / PX);
     const skyH = Math.ceil((1.12 * bh) / PX);
-    const balH = Math.ceil((0.95 * bh) / PX);
+    const balH = Math.ceil((BAL_SPAN * bh) / PX);
     const near = { body: "#0e0b22", bodyR: "#070512", edge: "#1c1838", roof: "#3a4270" };
     const mid = { body: "#171334", bodyR: "#0d0a22", edge: "#2a2650", roof: "#3a4270" };
     const far = { body: "#221d46", bodyR: "#181336", edge: "#39457a", roof: "#3a4270" };
     const t = {
       sky: makeTex(artW, skyH, drawSky),
-      far: makeTex(artW, cityH, cityDrawer(21, 0.3, 0.82, far, 0.24, 0.24)),
-      mid: makeTex(artW, cityH, cityDrawer(88, 0.22, 0.55, mid, 0.5, 0.32)),
-      near: makeTex(artW, cityH, cityDrawer(303, 0.15, 0.42, near, 0.42, 0.3)),
+      // shorter buildings (lower max-height fraction = fewer floors, not squashed)
+      far: makeTex(artW, cityH, cityDrawer(21, 0.22, 0.58, far, 0.24, 0.24)),
+      mid: makeTex(artW, cityH, cityDrawer(88, 0.18, 0.44, mid, 0.5, 0.32)),
+      near: makeTex(artW, cityH, cityDrawer(303, 0.14, 0.36, near, 0.42, 0.3)),
       balcony: makeTex(artW, balH, drawBalcony),
       lm: {},
     };
@@ -747,7 +835,7 @@ function Scene({ scroll }) {
         />
       ))}
       <Band tex={tex.near} top0={cityTop} bot0={cityBot} order={4} lift={1.04} sway={0.9} scroll={scroll} />
-      <Band tex={tex.balcony} top0={ROOF0} bot0={ROOF0 + 0.95} order={5} lift={1.0} sway={1.1} scroll={scroll} />
+      <Band tex={tex.balcony} top0={BAL_TOP} bot0={BAL_TOP + BAL_SPAN} order={5} lift={1.0} sway={1.1} scroll={scroll} />
     </>
   );
 }

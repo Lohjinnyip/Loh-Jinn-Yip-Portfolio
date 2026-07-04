@@ -1,0 +1,8 @@
+services:
+  portfolio:
+    build: .
+    image: jinnyip-portfolio:latest
+    container_name: jinnyip-portfolio
+    ports:
+      - "8080:80"        # visit http://localhost:8080
+    restart: unless-stopped
