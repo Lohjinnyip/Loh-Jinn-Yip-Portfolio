@@ -8,7 +8,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "predeploy": "npm run build",
-    "deploy": "gh-pages -d dist"
+    "deploy": "gh-pages -d dist",
+    "compress-videos": "node scripts/compress-videos.mjs"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.7",

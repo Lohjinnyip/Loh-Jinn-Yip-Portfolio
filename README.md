@@ -11,6 +11,21 @@ npm run build    # production build into dist/
 npm run preview  # preview the production build
 ```
 
+## Adding videos (keep them GitHub-friendly)
+
+Drop new clips into `public/videos/`, then run:
+
+```bash
+npm run compress-videos
+```
+
+This re-encodes every video to a web-optimised H.264 MP4 (CRF 23, `+faststart`
+for instant progressive playback, `yuv420p` for iOS/Safari), keeping full
+resolution while cutting file size ~3×. It's safe to re-run: clips already below
+~6 Mbps are detected as web-ready and skipped, so an already-compressed video is
+never re-encoded (which would slowly degrade quality). Requires `ffmpeg` on PATH
+(`winget install Gyan.FFmpeg` on Windows, `brew install ffmpeg` on macOS).
+
 ---
 
 This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
