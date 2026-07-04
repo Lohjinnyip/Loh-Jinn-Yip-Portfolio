@@ -4,6 +4,7 @@ import { useScrollSpy } from "../hooks/useScrollSpy";
 const LINKS = [
   { id: "home", label: "Home" },
   { id: "work", label: "Work" },
+  { id: "gallery", label: "Gallery" },
   { id: "about", label: "About" },
   { id: "contact", label: "Contact" },
 ];
