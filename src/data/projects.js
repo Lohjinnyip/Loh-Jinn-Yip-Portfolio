@@ -94,7 +94,7 @@ export const PROJECTS = [
     // 1920x1080 (16:9) landscape
     videoFile: "/videos/AIG%20Intro.mp4",
     videoSrc: "",
-    description: "Vertical brand intro animation.",
+    description: "Brand intro animation.",
   },
   {
     id: "ca-studio-intro",
@@ -107,6 +107,42 @@ export const PROJECTS = [
     videoFile: "/videos/Studio%20Intro.mp4",
     videoSrc: "",
     description: "Studio brand intro — edited and graded.",
+  },
+  {
+    id: "ca-selfservice",
+    title: "Self-Service Kiosks",
+    company: "company-a",
+    category: "Product",
+    year: "2026",
+    thumbnail: "",
+    vertical: true, // 1080x1920 (9:16)
+    videoFile: "/videos/20260421-4SelfServices-v1-1.25xSpeed.mp4",
+    videoSrc: "",
+    description: "Self-service kiosk product walkthrough.",
+  },
+  {
+    id: "ca-qbot",
+    title: "Qbot Games",
+    company: "company-a",
+    category: "Promo",
+    year: "2026",
+    thumbnail: "",
+    vertical: true, // 1080x1920 (9:16)
+    videoFile: "/videos/20260430-QbotGames-v2.mp4",
+    videoSrc: "",
+    description: "Qbot Games promo edit.",
+  },
+  {
+    id: "ca-qr",
+    title: "QR Feature",
+    company: "company-a",
+    category: "Product",
+    year: "2026",
+    thumbnail: "",
+    vertical: true, // 1080x1920 (9:16)
+    videoFile: "/videos/Qr-v2.mp4",
+    videoSrc: "",
+    description: "QR code feature highlight.",
   },
   {
     id: "p4",
