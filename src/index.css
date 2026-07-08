@@ -385,18 +385,21 @@ img, video { display: block; max-width: 100%; }
 
 .hero-inner {
   position: relative; z-index: 2;
-  display: flex; align-items: center; justify-content: space-between;
+  /* stretch so the portrait frame matches the hero card's height exactly —
+     top & bottom edges line up with the text card on the left */
+  display: flex; align-items: stretch; justify-content: space-between;
   gap: clamp(28px, 5vw, 68px);
 }
 .hero-inner .plate { flex: 0 1 auto; }
 
 /* ---- hero profile picture frame ---- */
-.hero-portrait { flex: 0 0 auto; }
+.hero-portrait { flex: 0 0 auto; display: flex; }
 .portrait-frame {
   position: relative;
-  width: clamp(210px, 22vw, 300px);
-  aspect-ratio: 4 / 5;
-  border-radius: 24px;
+  width: clamp(230px, 24vw, 320px);
+  height: 100%;              /* fills the stretched row → same height as the card */
+  min-height: 340px;
+  border-radius: 30px;       /* rounded picture-frame corners */
   overflow: hidden;
   background:
     linear-gradient(135deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.03) 45%, rgba(255, 255, 255, 0) 100%),
@@ -408,11 +411,10 @@ img, video { display: block; max-width: 100%; }
     0 0 60px -18px rgba(59, 130, 246, 0.6);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  transform: rotate(1.8deg);
   transition: transform 0.45s ease, box-shadow 0.45s ease;
 }
 .portrait-frame:hover {
-  transform: rotate(0deg) translateY(-5px);
+  transform: translateY(-5px);
   box-shadow: var(--shadow-2), 0 0 72px -12px rgba(56, 189, 248, 0.7);
 }
 .portrait-frame img {
