@@ -467,6 +467,7 @@ img, video { display: block; max-width: 100%; }
 @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
 
 .btn {
+  position: relative; overflow: hidden;   /* clips the hover shine sweep */
   display: inline-flex; align-items: center; gap: 10px;
   font-family: "Space Grotesk", sans-serif;
   font-size: 0.95rem;
@@ -475,15 +476,32 @@ img, video { display: block; max-width: 100%; }
   border-radius: var(--radius-pill);
   cursor: pointer;
   border: 1px solid transparent;
-  transition: transform 0.18s ease, box-shadow 0.25s ease, background 0.2s ease, border-color 0.2s ease;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease, background 0.2s ease, border-color 0.2s ease;
 }
-.btn svg { width: 17px; height: 17px; transition: transform 0.2s ease; }
-.btn .arrow { transition: transform 0.2s ease; }
-.btn:hover .arrow { transform: translateX(3px); }
+/* diagonal light streak that sweeps across on hover */
+.btn::after {
+  content: ""; position: absolute; top: 0; left: -130%;
+  width: 55%; height: 100%; pointer-events: none;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+  transform: skewX(-18deg);
+  transition: left 0.6s ease;
+}
+.btn:hover::after { left: 150%; }
+.btn:active { transform: scale(0.95); transition-duration: 0.05s; }
+.btn svg { width: 17px; height: 17px; transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.btn .arrow { transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.btn:hover .arrow { transform: translateX(5px); }
 .btn-primary { background: var(--btn-grad); color: #06101f; box-shadow: var(--glow-accent); }
-.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 18px 46px -8px rgba(59, 130, 246, 0.7); }
+.btn-primary:hover { transform: translateY(-3px); box-shadow: 0 20px 50px -8px rgba(59, 130, 246, 0.75); }
+.btn-primary:active { transform: translateY(-1px) scale(0.95); }
 .btn-ghost { background: var(--glass); color: var(--text); border-color: var(--glass-border); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
-.btn-ghost:hover { background: var(--glass-2); transform: translateY(-2px); border-color: rgba(255,255,255,0.2); }
+.btn-ghost:hover { background: var(--glass-2); transform: translateY(-3px); border-color: rgba(255,255,255,0.28); box-shadow: 0 14px 36px -12px rgba(0, 0, 0, 0.6); }
+.btn-ghost:active { transform: translateY(-1px) scale(0.95); }
+
+@media (prefers-reduced-motion: reduce) {
+  .btn, .btn:hover, .btn:active, .btn-primary:hover, .btn-ghost:hover { transform: none; }
+  .btn::after { display: none; }
+}
 
 .scroll-hint {
   position: absolute; bottom: 26px; left: 50%; transform: translateX(-50%);
@@ -705,7 +723,21 @@ img, video { display: block; max-width: 100%; }
   background: transparent;
   padding-bottom: 40px; /* tighten the gap down to the Contact section */
 }
-.about-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 48px; align-items: start; }
+.about-grid { display: grid; grid-template-columns: 0.85fr 1.4fr 1fr; gap: 48px; align-items: start; }
+.about-portrait {
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-1);
+}
+.about-portrait img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  object-position: center 20%;
+}
 .about p { color: var(--text-muted); line-height: 1.75; font-size: 1.05rem; }
 .about p + p { margin-top: 16px; }
 .skills { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 26px; }
@@ -953,6 +985,7 @@ body.modal-open .top-feather {
   .gallery-grid { grid-template-columns: repeat(2, 1fr); }
   .gallery-item.wide, .gallery-item.big { grid-column: span 2; }
   .about-grid { grid-template-columns: 1fr; }
+  .about-portrait { max-width: 320px; margin: 0 auto; }
   .about-detail { grid-template-columns: 1fr; gap: 34px; }
 }
 @media (max-width: 640px) {
@@ -1091,4 +1124,79 @@ body.modal-open .top-feather {
   width: auto;
   padding: 38px clamp(24px, 4vw, 46px);
   border-radius: 28px;
+}
+
+/* ---------- BRAND LOGO MARQUEE ----------
+   Infinite horizontal scroll of the tools used, sitting between Work & Gallery.
+   The track holds two copies of the logo set; translating it -50% loops
+   seamlessly. Edges fade out via a mask so logos slide in/out softly. */
+/* Full-bleed dark band, edge to edge, so the logos read clearly over the busy
+   city skyline. No backdrop-filter here — blurring under an animated child
+   forces a per-frame re-blur and makes the marquee stutter. */
+.marquee-section {
+  padding: 34px 0;
+  background: rgba(8, 12, 28, 0.82);
+  border-top: 1px solid var(--glass-border);
+  border-bottom: 1px solid var(--glass-border);
+}
+/* let this section span the full viewport width instead of the content column */
+.marquee-section .container {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+.marquee-eyebrow {
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 26px;
+}
+.marquee {
+  overflow: hidden;
+}
+.marquee-track {
+  display: flex;
+  width: max-content;
+  /* NOTE: spacing lives on .logo-chip margin, NOT flex gap. A trailing gap is
+     not counted by translateX(-50%), so gap makes the loop reset ~half a gap
+     early — a visible hitch every cycle. Per-chip margin keeps both copies
+     identical so -50% lands exactly on the seam. */
+  animation: marquee 36s linear infinite;
+  /* keep the track on its own compositor layer so transforms stay smooth */
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+}
+@keyframes marquee {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-50%, 0, 0); }
+}
+.logo-chip {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 0 0 auto;
+  margin-right: 22px;
+  padding: 18px 28px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid var(--glass-border);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+.logo-mark { display: flex; flex: 0 0 auto; }
+.logo-mark svg { display: block; width: 46px; height: 46px; }
+.logo-name {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee { overflow-x: auto; }
+  .marquee-track { animation: none; }
 }

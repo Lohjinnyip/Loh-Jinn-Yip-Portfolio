@@ -1100,7 +1100,7 @@ function moonTexture() {
   });
   return new THREE.CanvasTexture(c);
 }
-function Moon({ x, y, size, scroll, vh }) {
+function Moon({ x, y, size, scroll, vh, pointer }) {
   const tex = useMemo(() => {
     const t = moonTexture();
     t.magFilter = THREE.NearestFilter;
@@ -1109,8 +1109,14 @@ function Moon({ x, y, size, scroll, vh }) {
     return t;
   }, []);
   const ref = useRef(null);
-  useFrame(() => {
-    if (ref.current) ref.current.position.y = y + scroll.current * SHIFT * vh * 0.5;
+  const off = useRef({ x: 0, y: 0 });
+  useFrame((state, dt) => {
+    if (!ref.current) return;
+    const p = pointer?.current || { x: 0, y: 0 };
+    off.current.x = THREE.MathUtils.damp(off.current.x, p.x * vh * 0.03, 2.5, dt);
+    off.current.y = THREE.MathUtils.damp(off.current.y, p.y * vh * 0.02, 2.5, dt);
+    ref.current.position.x = x + off.current.x;
+    ref.current.position.y = y + scroll.current * SHIFT * vh * 0.42 + off.current.y;
   });
   return (
     <mesh ref={ref} position={[x, y, 0]} renderOrder={1}>
@@ -1121,7 +1127,7 @@ function Moon({ x, y, size, scroll, vh }) {
 }
 
 // ---- star field: pixel points that twinkle and orbit (curved motion) -------
-function StarField({ scroll }) {
+function StarField({ scroll, pointer }) {
   const { viewport } = useThree();
   const vw = viewport.width, vh = viewport.height;
   // a disc of stars covering the viewport corners so rotation never reveals gaps
@@ -1173,13 +1179,18 @@ function StarField({ scroll }) {
   useEffect(() => () => (geom.dispose(), mat.dispose()), [geom, mat]);
 
   const ref = useRef(null);
-  useFrame((state) => {
+  const off = useRef({ x: 0, y: 0 });
+  useFrame((state, dt) => {
     mat.uniforms.uTime.value = state.clock.elapsedTime;
     mat.uniforms.uPR.value = state.gl.getPixelRatio();
     if (ref.current) {
+      const p = pointer?.current || { x: 0, y: 0 };
       ref.current.rotation.z = state.clock.elapsedTime * 0.022; // slow orbit → curved paths
-      ref.current.position.y = scroll.current * SHIFT * vh * 0.15 + state.pointer.y * vh * 0.004;
-      ref.current.position.x = state.pointer.x * vw * 0.006;
+      // farthest layer → smallest pointer parallax
+      off.current.x = THREE.MathUtils.damp(off.current.x, p.x * vw * 0.012, 2, dt);
+      off.current.y = THREE.MathUtils.damp(off.current.y, p.y * vh * 0.01, 2, dt);
+      ref.current.position.x = off.current.x;
+      ref.current.position.y = scroll.current * SHIFT * vh * 0.15 + off.current.y;
     }
   });
   return <points ref={ref} geometry={geom} material={mat} renderOrder={0.5} />;
@@ -1189,21 +1200,28 @@ function StarField({ scroll }) {
 
 const flatMat = (tex) => ({ map: tex, transparent: true, depthTest: false, depthWrite: false, toneMapped: false });
 
-function Band({ tex, top0, bot0, order, lift, sway = 0, drift = 0, scroll }) {
+function Band({ tex, top0, bot0, order, lift, sway = 0, drift = 0, scroll, pointer }) {
   const ref = useRef(null);
+  const off = useRef({ x: 0, y: 0 }); // damped pointer offset (smooth, weighty)
   const { viewport } = useThree();
   const vw = viewport.width, vh = viewport.height;
   const w = vw * OVER;
   const top = vh * 0.5 - top0 * vh;
   const bot = vh * 0.5 - bot0 * vh;
   const cy = (top + bot) / 2;
-  useFrame((state) => {
+  useFrame((state, dt) => {
     const g = ref.current;
     if (!g) return;
-    g.position.y = cy + scroll.current * SHIFT * vh * lift + state.pointer.y * vh * 0.008 * sway;
-    let x = state.pointer.x * vw * 0.01 * sway;
+    const p = pointer?.current || { x: 0, y: 0 };
+    // depth parallax: nearer bands (higher sway) shift more with the pointer
+    const tx = p.x * vw * 0.032 * sway;
+    const ty = p.y * vh * 0.014 * sway;
+    off.current.x = THREE.MathUtils.damp(off.current.x, tx, 3.5, dt);
+    off.current.y = THREE.MathUtils.damp(off.current.y, ty, 3.5, dt);
+    let x = off.current.x;
     if (drift) x += ((state.clock.elapsedTime * drift) % (w * 0.3)) - w * 0.15;
     g.position.x = x;
+    g.position.y = cy + scroll.current * SHIFT * vh * lift + off.current.y;
   });
   return (
     <mesh ref={ref} position={[0, cy, 0]} renderOrder={order}>
@@ -1214,17 +1232,22 @@ function Band({ tex, top0, bot0, order, lift, sway = 0, drift = 0, scroll }) {
 }
 
 // A landmark: dark structure + additive LED mask that cycles through RGB hues.
-function Landmark({ struct, leds, x, w, h, phase, scroll }) {
+function Landmark({ struct, leds, x, w, h, phase, scroll, pointer }) {
   const { viewport } = useThree();
   const vw = viewport.width, vh = viewport.height;
   const baseY = vh * 0.5 - ROOF0 * vh + h / 2; // base sits on the roofline
   const gref = useRef(null);
   const lref = useRef(null);
-  useFrame((state) => {
+  const offX = useRef(0);
+  useFrame((state, dt) => {
     const g = gref.current;
     if (g) {
+      const p = pointer?.current || { x: 0 };
+      // depth 0.85 → parallaxes between the mid (0.72) and near (0.95) bands it sits among
+      const tx = p.x * vw * 0.032 * 0.85;
+      offX.current = THREE.MathUtils.damp(offX.current, tx, 3.5, dt);
       g.position.y = baseY + scroll.current * SHIFT * vh * CITY_LIFT;
-      g.position.x = x + state.pointer.x * vw * 0.01 * 0.7;
+      g.position.x = x + offX.current;
     }
     if (lref.current) {
       const hue = (state.clock.elapsedTime * 0.07 + phase) % 1;
@@ -1265,7 +1288,7 @@ function BgColor({ scroll }) {
   return null;
 }
 
-function Scene({ scroll }) {
+function Scene({ scroll, pointer }) {
   const { viewport } = useThree();
   const vw = viewport.width, vh = viewport.height;
   const bw = Math.round(vw / 40) * 40;
@@ -1315,13 +1338,14 @@ function Scene({ scroll }) {
   return (
     <>
       <BgColor scroll={scroll} />
-      {/* sky + far city + balcony all move rigidly (lift 1.0) so the city and the
-          studio below read as one connected world; only moon/stars parallax. */}
-      <Band tex={tex.sky} top0={-0.06} bot0={1.06} order={0} lift={1.0} sway={0.3} scroll={scroll} />
-      <StarField scroll={scroll} />
-      <Moon x={vw * 0.3} y={vh * 0.3} size={vh * 0.2} scroll={scroll} vh={vh} />
-      <Band tex={tex.far} top0={cityTop} bot0={cityBot} order={1} lift={1.0} sway={0.5} scroll={scroll} />
-      <Band tex={tex.mid} top0={cityTop} bot0={cityBot} order={2} lift={1.0} sway={0.7} scroll={scroll} />
+      {/* The city→balcony→studio stack moves rigidly (lift 1.0) so it reads as one
+          connected world. Only the backmost sky/moon/stars lag on scroll (lift < 1)
+          for depth, and every layer parallaxes on the pointer by its `sway` (depth). */}
+      <Band tex={tex.sky} top0={-0.06} bot0={1.06} order={0} lift={0.9} sway={0.28} scroll={scroll} pointer={pointer} />
+      <StarField scroll={scroll} pointer={pointer} />
+      <Moon x={vw * 0.3} y={vh * 0.3} size={vh * 0.2} scroll={scroll} vh={vh} pointer={pointer} />
+      <Band tex={tex.far} top0={cityTop} bot0={cityBot} order={1} lift={0.97} sway={0.5} scroll={scroll} pointer={pointer} />
+      <Band tex={tex.mid} top0={cityTop} bot0={cityBot} order={2} lift={1.0} sway={0.72} scroll={scroll} pointer={pointer} />
       {LANDMARKS.map((L) => (
         <Landmark
           key={L.key}
@@ -1332,18 +1356,42 @@ function Scene({ scroll }) {
           h={vh * L.hFrac}
           phase={L.phase}
           scroll={scroll}
+          pointer={pointer}
         />
       ))}
-      <Band tex={tex.near} top0={cityTop} bot0={cityBot} order={4} lift={1.0} sway={0.9} scroll={scroll} />
-      <Band tex={tex.balcony} top0={BAL_TOP} bot0={BAL_TOP + BAL_SPAN} order={5} lift={1.0} sway={1.1} scroll={scroll} />
+      <Band tex={tex.near} top0={cityTop} bot0={cityBot} order={4} lift={1.0} sway={0.95} scroll={scroll} pointer={pointer} />
+      <Band tex={tex.balcony} top0={BAL_TOP} bot0={BAL_TOP + BAL_SPAN} order={5} lift={1.0} sway={1.25} scroll={scroll} pointer={pointer} />
       {/* studio sits directly below the deck — same sway so the seam holds */}
-      <Band tex={tex.studio} top0={STUDIO_TOP0} bot0={STUDIO_BOT0} order={6} lift={1.0} sway={1.1} scroll={scroll} />
+      <Band tex={tex.studio} top0={STUDIO_TOP0} bot0={STUDIO_BOT0} order={6} lift={1.0} sway={1.25} scroll={scroll} pointer={pointer} />
     </>
   );
 }
 
 export default function CityBackground() {
   const scroll = useRef(0);
+  // page-wide pointer in NDC [-1,1]. Driven from a window listener (not R3F's
+  // built-in pointer) so the parallax reacts to the mouse ANYWHERE on the page,
+  // not only over the bare canvas (the hero card etc. sit on top of it).
+  const pointer = useRef({ x: 0, y: 0 });
+
+  useEffect(() => {
+    const onMove = (e) => {
+      pointer.current.x = (e.clientX / window.innerWidth) * 2 - 1;
+      pointer.current.y = -((e.clientY / window.innerHeight) * 2 - 1);
+    };
+    // gentle device-tilt parallax on phones/tablets (gamma≈left-right, beta≈front-back)
+    const onTilt = (e) => {
+      if (e.gamma == null) return;
+      pointer.current.x = Math.max(-1, Math.min(1, e.gamma / 35));
+      pointer.current.y = Math.max(-1, Math.min(1, (e.beta - 45) / 35));
+    };
+    window.addEventListener("pointermove", onMove, { passive: true });
+    window.addEventListener("deviceorientation", onTilt, { passive: true });
+    return () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("deviceorientation", onTilt);
+    };
+  }, []);
 
   useEffect(() => {
     let raf = 0;
@@ -1372,7 +1420,7 @@ export default function CityBackground() {
   return (
     <div className="bg-scene" aria-hidden="true">
       <Canvas orthographic camera={{ position: [0, 0, 100], near: 0.1, far: 1000, zoom: 1 }} dpr={[1, 2]}>
-        <Scene scroll={scroll} />
+        <Scene scroll={scroll} pointer={pointer} />
       </Canvas>
       <div className="vignette" />
     </div>
