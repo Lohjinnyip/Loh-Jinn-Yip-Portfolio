@@ -41,11 +41,10 @@ export const PROJECTS = [
     company: "company-a",
     category: "Trailer",
     year: "2025",
-    thumbnail: "https://img.youtube.com/vi/g_54LYkjC0Y/hqdefault.jpg",
-    // Drop a 720p export here for guaranteed 720p playback (no quality menu).
-    // Until the file exists, playback falls back to the YouTube link below.
-    videoFile: "/videos/melaka-river-of-time-720p.mp4",
-    videoSrc: "https://youtu.be/g_54LYkjC0Y",
+    thumbnail: "",
+    // Self-hosted 1920x1080 (16:9) file — plays directly, no YouTube.
+    videoFile: "/videos/Melaka_RiverofTime_Video%20(1).mp4",
+    videoSrc: "",
     description: "Cultural promo capturing Melaka's historic river — edited, graded and scored.",
   },
   // --- Crave Asia imports (rename titles/categories to the real ones anytime) ---
@@ -97,10 +96,18 @@ export const PROJECTS = [
     videoSrc: "",
     description: "Vertical brand intro animation.",
   },
-  // NOTE: "Studio Intro.mp4" (1920x1080, 192 MB) and the vertical
-  // "Melaka_RiverofTime_Video (1).mp4" (176 MB) are over GitHub's 100 MB
-  // per-file limit, so they are NOT wired up. Compress them to ~720p (or
-  // upload to YouTube and use videoSrc) and they can be added.
+  {
+    id: "ca-studio-intro",
+    title: "Studio Intro",
+    company: "company-a",
+    category: "Brand Film",
+    year: "2026",
+    thumbnail: "",
+    vertical: true, // 1080x1920 (9:16)
+    videoFile: "/videos/Studio%20Intro.mp4",
+    videoSrc: "",
+    description: "Studio brand intro — edited and graded.",
+  },
   {
     id: "p4",
     title: "Prayer Bowl",
