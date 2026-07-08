@@ -1232,10 +1232,14 @@ function Band({ tex, top0, bot0, order, lift, sway = 0, drift = 0, scroll, point
 }
 
 // A landmark: dark structure + additive LED mask that cycles through RGB hues.
-function Landmark({ struct, leds, x, w, h, phase, scroll, pointer }) {
+// `ext` is extra height whose legs run BELOW the roofline into the near-city
+// (which renders in front and hides them, so the tower reads as rooted, not floating).
+function Landmark({ struct, leds, x, w, h, ext = 0, phase, scroll, pointer }) {
   const { viewport } = useThree();
   const vw = viewport.width, vh = viewport.height;
-  const baseY = vh * 0.5 - ROOF0 * vh + h / 2; // base sits on the roofline
+  const planeH = h + ext;
+  // tower base still sits on the roofline; the ext hangs below it
+  const baseY = vh * 0.5 - ROOF0 * vh + h / 2 - ext / 2;
   const gref = useRef(null);
   const lref = useRef(null);
   const off = useRef({ x: 0, y: 0 });
@@ -1261,11 +1265,11 @@ function Landmark({ struct, leds, x, w, h, phase, scroll, pointer }) {
   return (
     <group ref={gref} position={[x, baseY, 0]}>
       <mesh renderOrder={3}>
-        <planeGeometry args={[w, h]} />
+        <planeGeometry args={[w, planeH]} />
         <meshBasicMaterial {...flatMat(struct)} />
       </mesh>
       <mesh ref={lref} renderOrder={3} position={[0, 0, 0.1]}>
-        <planeGeometry args={[w, h]} />
+        <planeGeometry args={[w, planeH]} />
         <meshBasicMaterial map={leds} transparent depthTest={false} depthWrite={false} toneMapped={false} blending={THREE.AdditiveBlending} />
       </mesh>
     </group>
@@ -1277,6 +1281,10 @@ const LANDMARKS = [
   { key: "petronas", draw: drawPetronas, hFrac: 0.56, aspect: 0.78, x: 0.14, phase: 0.36 },
   { key: "kltower", draw: drawKLTower, hFrac: 0.6, aspect: 0.28, x: 0.4, phase: 0.7 },
 ];
+// fraction of tower height added below the base as "legs" that run into the
+// near-city (which renders in front and occludes them → no floating look).
+const LM_EXT = 0.16;
+const LM_SS = 3; // landmark texture supersample
 
 // clear-colour lerp: cool night-blue at the top → warm tungsten at the studio,
 // so any sliver behind the layers reads correctly through the descent.
@@ -1324,9 +1332,17 @@ function Scene({ scroll, pointer }) {
     LANDMARKS.forEach((L) => {
       const h = Math.ceil((L.hFrac * bh) / PX);
       const w = Math.ceil(h * L.aspect);
+      const extTex = Math.round(h * LM_EXT);
+      const htot = h + extTex;
       t.lm[L.key] = {
-        struct: makeTex(w, h, (c, W, Hh) => L.draw(c, W, Hh, false), 3),
-        leds: makeTex(w, h, (c, W, Hh) => L.draw(c, W, Hh, true), 3),
+        struct: makeTex(w, htot, (c, W, Hh) => {
+          const th = Hh - extTex; // draw the tower in the top part…
+          L.draw(c, W, th, false);
+          // …then smear its base row straight down through the extension, so each
+          // silhouette's legs (KL shaft, Merdeka base, Petronas' two legs) run down.
+          c.drawImage(c.canvas, 0, (th - 1) * LM_SS, W * LM_SS, LM_SS, 0, th, W, extTex);
+        }, LM_SS),
+        leds: makeTex(w, htot, (c, W, Hh) => L.draw(c, W, Hh - extTex, true), LM_SS),
       };
     });
     return t;
@@ -1358,6 +1374,7 @@ function Scene({ scroll, pointer }) {
           x={vw * L.x}
           w={vh * L.hFrac * L.aspect}
           h={vh * L.hFrac}
+          ext={vh * L.hFrac * LM_EXT}
           phase={L.phase}
           scroll={scroll}
           pointer={pointer}
