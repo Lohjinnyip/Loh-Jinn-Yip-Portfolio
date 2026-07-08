@@ -26,6 +26,29 @@ export default function Hero() {
             </a>
           </div>
         </div>
+
+        {/* Profile picture. Drop a photo at public/profile.jpg (portrait, ~4:5)
+            and it appears here automatically; until then a placeholder shows. */}
+        <div className="hero-portrait reveal">
+          <div className="portrait-frame">
+            <div className="portrait-fallback">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="8" r="4" />
+                <path d="M4 21c0-4 3.6-7 8-7s8 3 8 7" />
+              </svg>
+              <span>Add your photo<br /><code>public/profile.jpg</code></span>
+            </div>
+            <img
+              src="/profile.jpg"
+              alt="Loh Jinn Yip"
+              onError={(e) => { e.currentTarget.style.display = "none"; }}
+            />
+            <span className="portrait-name">
+              Loh Jinn Yip
+              <em>Video Editor</em>
+            </span>
+          </div>
+        </div>
       </div>
 
       <a href="#work" className="scroll-hint" aria-label="Scroll to work">
