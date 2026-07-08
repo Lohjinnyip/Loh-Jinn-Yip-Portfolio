@@ -1238,16 +1238,20 @@ function Landmark({ struct, leds, x, w, h, phase, scroll, pointer }) {
   const baseY = vh * 0.5 - ROOF0 * vh + h / 2; // base sits on the roofline
   const gref = useRef(null);
   const lref = useRef(null);
-  const offX = useRef(0);
+  const off = useRef({ x: 0, y: 0 });
   useFrame((state, dt) => {
     const g = gref.current;
     if (g) {
-      const p = pointer?.current || { x: 0 };
-      // depth 0.85 → parallaxes between the mid (0.72) and near (0.95) bands it sits among
+      const p = pointer?.current || { x: 0, y: 0 };
+      // depth 0.85 → parallaxes between the mid (0.72) and near (0.95) bands it sits
+      // among. MUST apply the same vertical parallax as those bands, otherwise the
+      // towers stay put while the skyline shifts and they look like they float.
       const tx = p.x * vw * 0.032 * 0.85;
-      offX.current = THREE.MathUtils.damp(offX.current, tx, 3.5, dt);
-      g.position.y = baseY + scroll.current * SHIFT * vh * CITY_LIFT;
-      g.position.x = x + offX.current;
+      const ty = p.y * vh * 0.014 * 0.85;
+      off.current.x = THREE.MathUtils.damp(off.current.x, tx, 3.5, dt);
+      off.current.y = THREE.MathUtils.damp(off.current.y, ty, 3.5, dt);
+      g.position.y = baseY + scroll.current * SHIFT * vh * CITY_LIFT + off.current.y;
+      g.position.x = x + off.current.x;
     }
     if (lref.current) {
       const hue = (state.clock.elapsedTime * 0.07 + phase) % 1;
