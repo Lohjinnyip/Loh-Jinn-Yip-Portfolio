@@ -721,23 +721,14 @@ img, video { display: block; max-width: 100%; }
 .about {
   /* no full-width veil — the single .plate.wide panel provides the backdrop */
   background: transparent;
-  padding-bottom: 40px; /* tighten the gap down to the Contact section */
+  /* sit high in the section so the panel clears the studio monitors ("window")
+     rendered in the 3D background below it */
+  padding-top: 40px;
+  padding-bottom: 220px;
 }
-.about-grid { display: grid; grid-template-columns: 0.85fr 1.4fr 1fr; gap: 48px; align-items: start; }
-.about-portrait {
-  border-radius: 18px;
-  overflow: hidden;
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--shadow-1);
-}
-.about-portrait img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  aspect-ratio: 3 / 4;
-  object-fit: cover;
-  object-position: center 20%;
-}
+/* compact panel so it occupies the upper screen, leaving the studio window visible below */
+.about .plate.wide { padding-top: 30px; padding-bottom: 30px; }
+.about-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 40px; align-items: start; }
 .about p { color: var(--text-muted); line-height: 1.75; font-size: 1.05rem; }
 .about p + p { margin-top: 16px; }
 .skills { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 26px; }
@@ -763,7 +754,7 @@ img, video { display: block; max-width: 100%; }
 .stat .lbl { color: var(--text-muted); font-size: 0.9rem; margin-top: 7px; }
 
 /* education / languages / expertise detail row */
-.about-detail { display: grid; grid-template-columns: 1.4fr 1fr; gap: 48px; align-items: start; margin-top: 56px; }
+.about-detail { display: grid; grid-template-columns: 1.4fr 1fr; gap: 48px; align-items: start; margin-top: 32px; }
 .info-title {
   font-family: "Space Grotesk", sans-serif;
   font-size: 0.78rem; letter-spacing: 0.28em; text-transform: uppercase;
@@ -985,7 +976,6 @@ body.modal-open .top-feather {
   .gallery-grid { grid-template-columns: repeat(2, 1fr); }
   .gallery-item.wide, .gallery-item.big { grid-column: span 2; }
   .about-grid { grid-template-columns: 1fr; }
-  .about-portrait { max-width: 320px; margin: 0 auto; }
   .about-detail { grid-template-columns: 1fr; gap: 34px; }
 }
 @media (max-width: 640px) {
