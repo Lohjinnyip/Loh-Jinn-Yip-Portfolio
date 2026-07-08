@@ -48,26 +48,59 @@ export const PROJECTS = [
     videoSrc: "https://youtu.be/g_54LYkjC0Y",
     description: "Cultural promo capturing Melaka's historic river — edited, graded and scored.",
   },
+  // --- Crave Asia imports (rename titles/categories to the real ones anytime) ---
   {
-    id: "p2",
-    title: "Brand Story Film",
+    id: "ca-studio-app",
+    title: "Studio Membership App",
     company: "company-a",
-    category: "Brand Film",
+    category: "Product",
     year: "2026",
     thumbnail: "",
+    vertical: true, // 720x1280 (9:16)
+    videoFile: "/videos/Studio%20Membership%20App%20Gym%20BG.mp4",
     videoSrc: "",
-    description: "60-second brand story cut for social and web.",
+    description: "Gym / membership app promo.",
   },
   {
-    id: "p3",
-    title: "Founder Interview",
+    id: "ca-dualscreen",
+    title: "Dual Screen POS",
     company: "company-a",
-    category: "Interview",
-    year: "2025",
+    category: "Product",
+    year: "2026",
     thumbnail: "",
+    vertical: true, // 1080x1920 (9:16)
+    videoFile: "/videos/20260504-DualScreenPos-v1.mp4",
     videoSrc: "",
-    description: "Multi-cam interview edit with lower-thirds and b-roll.",
+    description: "Dual-screen point-of-sale product piece.",
   },
+  {
+    id: "ca-promo-flash",
+    title: "Promotion Flash",
+    company: "company-a",
+    category: "Promo",
+    year: "2026",
+    thumbnail: "",
+    vertical: true, // 1080x1920 (9:16)
+    videoFile: "/videos/20260511-VIDEO%20PROMOTION%20FLASH-v1.mp4",
+    videoSrc: "",
+    description: "Fast-cut promotional flash spot.",
+  },
+  {
+    id: "ca-aig",
+    title: "AIG Intro",
+    company: "company-a",
+    category: "Intro",
+    year: "2026",
+    thumbnail: "",
+    // 1920x1080 (16:9) landscape
+    videoFile: "/videos/AIG%20Intro.mp4",
+    videoSrc: "",
+    description: "Vertical brand intro animation.",
+  },
+  // NOTE: "Studio Intro.mp4" (1920x1080, 192 MB) and the vertical
+  // "Melaka_RiverofTime_Video (1).mp4" (176 MB) are over GitHub's 100 MB
+  // per-file limit, so they are NOT wired up. Compress them to ~720p (or
+  // upload to YouTube and use videoSrc) and they can be added.
   {
     id: "p4",
     title: "Prayer Bowl",
