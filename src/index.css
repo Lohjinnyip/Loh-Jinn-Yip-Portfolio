@@ -372,6 +372,15 @@ img, video { display: block; max-width: 100%; }
   position: absolute; inset: 0;
   background: radial-gradient(120% 100% at 50% 30%, transparent 45%, rgba(5, 6, 15, 0.55) 100%);
 }
+/* edge-darken while the camera crosses the window frame (--pass set from JS,
+   peaks ~55–66% scroll). Sits over the canvas, below the page content. */
+.bg-pass {
+  position: absolute; inset: 0;
+  pointer-events: none;
+  opacity: var(--pass, 0);
+  background: radial-gradient(90% 75% at 50% 45%, transparent 30%, rgba(0, 0, 0, 0.92) 100%);
+  transition: opacity 0.1s linear;
+}
 
 /* ---------- HERO ---------- */
 .hero {
@@ -507,7 +516,7 @@ img, video { display: block; max-width: 100%; }
   position: absolute; bottom: 26px; left: 50%; transform: translateX(-50%);
   z-index: 2; color: var(--text-muted); font-size: 0.95rem; letter-spacing: 0.24em; text-transform: uppercase;
   display: flex; flex-direction: column; align-items: center; gap: 12px;
-  opacity: calc(1 - var(--p) * 6); /* fades out shortly after scrolling begins */
+  opacity: calc(1 - var(--p) * 14); /* only in the hero — gone before the transition */
   pointer-events: none;
 }
 .scroll-hint .mouse { width: 34px; height: 54px; border: 2px solid var(--text-muted); border-radius: 18px; position: relative; }
