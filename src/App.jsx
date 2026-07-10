@@ -1,9 +1,10 @@
-import CityBackground from "./components/CityBackground";
+import CinematicBackground from "./components/CinematicBackground";
 import Loader from "./components/Loader";
 import ScrollBar from "./components/ScrollBar";
 import Navbar from "./components/Navbar";
 import Hero from "./components/Hero";
 import Work from "./components/Work";
+import Marquee from "./components/Marquee";
 import Gallery from "./components/Gallery";
 import About from "./components/About";
 import Contact from "./components/Contact";
@@ -15,7 +16,7 @@ function App() {
   return (
     <>
       <Loader />
-      <CityBackground />
+      <CinematicBackground />
       <ScrollBar />
       <Navbar />
       {/* Feathered scroll edge — softens content as it slides under the nav */}
@@ -23,6 +24,7 @@ function App() {
       <main>
         <Hero />
         <Work />
+        <Marquee />
         <Gallery />
         <About />
         <Contact />
