@@ -86,25 +86,48 @@ function makeSky() {
   }
   return tex(c);
 }
+// Parametric facade — one of several window LAYOUT styles (grid / vertical
+// columns / sparse scatter / lit-floor bands) with randomised spacing, window
+// size, density and warm-vs-neon mix, so no two buildings read the same.
 function makeFacade(seed) {
   const [c, ctx] = makeCanvas(48, 96);
   const rng = makeRng(seed);
   ctx.fillStyle = pick(rng, BODIES);
   ctx.fillRect(0, 0, 48, 96);
-  ctx.fillStyle = "rgba(0,0,0,0.45)";
-  ctx.fillRect(38, 0, 10, 96);
+  ctx.fillStyle = "rgba(0,0,0,0.42)";
+  ctx.fillRect(40, 0, 8, 96); // side shadow → depth
   ctx.fillStyle = "#241f45";
-  ctx.fillRect(0, 0, 48, 2);
-  for (let y = 6; y < 92; y += 6)
-    for (let x = 4; x < 38; x += 5) {
-      if (rng() < 0.32) win(ctx, x, y, 2, 2, rng() < 0.72 ? "#ffcf6b" : pick(rng, NEON));
-      else {
-        ctx.globalAlpha = 0.35;
-        ctx.fillStyle = "#1a2044";
-        ctx.fillRect(x, y, 2, 2);
-        ctx.globalAlpha = 1;
-      }
+  ctx.fillRect(0, 0, 48, 2); // top cap
+
+  const style = Math.floor(rng() * 4); // 0 grid · 1 columns · 2 sparse · 3 bands
+  const gy = 5 + Math.floor(rng() * 3); // floor spacing 5–7
+  const gx = 4 + Math.floor(rng() * 3); // column spacing 4–6
+  const ww = rng() < 0.5 ? 2 : 3; // window width
+  const wh = 2 + Math.floor(rng() * 2); // window height 2–3
+  const dens = 0.24 + rng() * 0.38; // base lit density
+  const warm = 0.58 + rng() * 0.32; // warm vs neon share
+  const litCol = () => (rng() < warm ? "#ffcf6b" : pick(rng, NEON));
+  const dark = (x, y) => {
+    ctx.globalAlpha = 0.32;
+    ctx.fillStyle = "#1a2044";
+    ctx.fillRect(x, y, ww, wh);
+    ctx.globalAlpha = 1;
+  };
+
+  for (let y = 6; y < 92; y += gy) {
+    const bandLit = style === 3 && rng() < 0.5;
+    for (let x = 4; x < 38; x += gx) {
+      let lit;
+      if (style === 0) lit = rng() < dens;
+      else if (style === 1) {
+        const col = Math.floor((x - 4) / gx);
+        lit = rng() < (col % 2 === 0 ? dens + 0.34 : dens - 0.14);
+      } else if (style === 2) lit = rng() < dens * 0.5;
+      else lit = bandLit ? rng() < 0.75 : rng() < 0.1;
+      if (lit) win(ctx, x, y, ww, wh, litCol());
+      else dark(x, y);
     }
+  }
   return tex(c);
 }
 function makeGround() {
@@ -138,8 +161,6 @@ function makeTimeline() {
       x += w;
     }
   });
-  ctx.fillStyle = "#ffffff";
-  ctx.fillRect(60, 10, 1.5, 80);
   return tex(c);
 }
 function makePreview() {
@@ -256,12 +277,51 @@ function SkyAnim({ starsRef, scroll, reduced }) {
   return null;
 }
 
+// rooftop silhouettes (dark, no windows) — varies the skyline top edge:
+// small boxes, water tanks, antennas, stepped setbacks. Reuses the building's
+// own dark roof material (b.mats[2]) so nothing glows up top.
+function RoofBits({ b }) {
+  const r = b.roof;
+  if (!r || r.type === "flat") return null;
+  const [w, , d] = b.size;
+  const cx = b.pos[0], cz = b.pos[2], top = b.pos[1] * 2;
+  const m = b.mats[2];
+  if (r.type === "box")
+    return <mesh position={[cx + r.ox, top + r.bh / 2, cz]} material={m}><boxGeometry args={[w * r.bw, r.bh, d * 0.6]} /></mesh>;
+  if (r.type === "twin")
+    return (
+      <group>
+        <mesh position={[cx - w * 0.22, top + 0.9, cz]} material={m}><boxGeometry args={[w * 0.3, 1.8, d * 0.5]} /></mesh>
+        <mesh position={[cx + w * 0.2, top + 0.7, cz]} material={m}><boxGeometry args={[w * 0.26, 1.4, d * 0.5]} /></mesh>
+      </group>
+    );
+  if (r.type === "tank")
+    return (
+      <group position={[cx + r.ox, top, cz]}>
+        <mesh position={[0, 0.15, 0]} material={m}><boxGeometry args={[w * 0.34, 0.3, d * 0.4]} /></mesh>
+        <mesh position={[0, 1.2, 0]} material={m}><cylinderGeometry args={[w * 0.15, w * 0.15, 2, 8]} /></mesh>
+      </group>
+    );
+  if (r.type === "antenna")
+    return (
+      <group position={[cx + r.ox, top, cz]}>
+        <mesh position={[0, 0.5, 0]} material={m}><boxGeometry args={[w * 0.32, 1, d * 0.4]} /></mesh>
+        <mesh position={[0, r.ah / 2 + 1, 0]} material={m}><boxGeometry args={[0.28, r.ah, 0.28]} /></mesh>
+      </group>
+    );
+  if (r.type === "stepped")
+    return <mesh position={[cx, top + r.sh / 2, cz]} material={m}><boxGeometry args={[w * 0.62, r.sh, d * 0.62]} /></mesh>;
+  return null;
+}
+
 // ---- EXTERIOR (city seen through the window) --------------------------------
 //  Distant skyline / sky / moon / landmarks. No foreground geometry.
 function Exterior({ count, scroll, reduced }) {
   const starsRef = useRef();
   const a = useMemo(() => {
-    const facades = Array.from({ length: 6 }, (_, i) => makeFacade(21 + i * 7));
+    // many facade variants → far less repetition than the old 6
+    const facades = Array.from({ length: 16 }, (_, i) => makeFacade(21 + i * 13));
+    const roofsOn = count >= 20; // skip rooftop detail on mobile (perf)
     const rng = makeRng(21);
     // 6-material box: windowed facade on the 4 SIDES, flat dark on TOP+BOTTOM
     // so rooftops never show glowing windows. Order: px,nx,py(top),ny,pz,nz.
@@ -290,7 +350,19 @@ function Exterior({ count, scroll, reduced }) {
       while (x < sp) {
         const w = L.wMin + rng() * (L.wMax - L.wMin);
         const h = L.hMin + rng() * (L.hMax - L.hMin);
-        buildings.push({ pos: [x + w / 2, h / 2, L.z], size: [w, h, w * 0.85], mats: mkMats(facades[Math.floor(rng() * 6)], L.dim) });
+        const mats = mkMats(facades[Math.floor(rng() * facades.length)], L.dim);
+        // rooftop feature — taller buildings lean antenna/stepped, shorter get
+        // boxes/tanks; the far backdrop stays flat and clean.
+        let roof = { type: "flat" };
+        if (roofsOn && L.z > -150) {
+          const rr = rng();
+          const tall = h > L.hMax - 4;
+          const type = tall
+            ? rr < 0.4 ? "antenna" : rr < 0.72 ? "stepped" : "box"
+            : rr < 0.34 ? "flat" : rr < 0.54 ? "box" : rr < 0.7 ? "tank" : rr < 0.85 ? "twin" : "stepped";
+          roof = { type, ox: (rng() - 0.5) * w * 0.4, bw: 0.28 + rng() * 0.24, bh: 1 + rng() * 1.4, ah: 3 + rng() * 4.5, sh: 1.6 + rng() * 1.8 };
+        }
+        buildings.push({ pos: [x + w / 2, h / 2, L.z], size: [w, h, w * 0.85], mats, roof });
         x += w + L.gap + rng() * L.jg;
       }
     });
@@ -337,9 +409,12 @@ function Exterior({ count, scroll, reduced }) {
           Landmarks add +6 back (below) so THEY stay put while buildings drop. */}
       <group position={[0, -24, 0]}>
         {a.buildings.map((b, i) => (
-          <mesh key={i} position={b.pos} material={b.mats}>
-            <boxGeometry args={b.size} />
-          </mesh>
+          <group key={i}>
+            <mesh position={b.pos} material={b.mats}>
+              <boxGeometry args={b.size} />
+            </mesh>
+            <RoofBits b={b} />
+          </group>
         ))}
       </group>
       {/* (KL landmarks removed) */}
@@ -436,45 +511,65 @@ function Studio({ groupRef, softboxRef }) {
         <meshStandardMaterial color="#3a2038" roughness={1} />
       </mesh>
 
-      {/* ===== KEPT: desk (near back wall, facing the camera) — a touch wider
-              so the speakers sit ON it, clear of the monitors ===== */}
-      <mesh position={[0, 3.9, -4.6]} material={wood}><boxGeometry args={[15, 0.3, 2.6]} /></mesh>
-      <mesh position={[-6.9, 1.9, -4.6]} material={wood}><boxGeometry args={[0.3, 3.8, 2.2]} /></mesh>
-      <mesh position={[6.9, 1.9, -4.6]} material={wood}><boxGeometry args={[0.3, 3.8, 2.2]} /></mesh>
+      {/* ===== desk (deeper now, so every accessory sits fully on it) ===== */}
+      <mesh position={[0, 3.9, -4.5]} material={wood}><boxGeometry args={[15, 0.3, 2.9]} /></mesh>
+      <mesh position={[-6.9, 1.9, -4.5]} material={wood}><boxGeometry args={[0.3, 3.8, 2.4]} /></mesh>
+      <mesh position={[6.9, 1.9, -4.5]} material={wood}><boxGeometry args={[0.3, 3.8, 2.4]} /></mesh>
 
-      {/* ===== KEPT: two monitors (large, screens face the camera) ===== */}
-      <group position={[0, 5.7, -4.2]}>
+      {/* two monitors on stands whose FEET rest on the desk top (no sinking) */}
+      <group position={[0, 6.35, -4.4]}>
         <mesh position={[-2.9, 0, 0]} material={dark}><boxGeometry args={[4.8, 2.8, 0.3]} /></mesh>
         <mesh position={[-2.9, 0, 0.18]}><planeGeometry args={[4.4, 2.5]} /><meshBasicMaterial map={t.timeline} toneMapped={false} /></mesh>
         <mesh position={[2.9, 0, 0]} material={dark}><boxGeometry args={[4.8, 2.8, 0.3]} /></mesh>
         <mesh position={[2.9, 0, 0.18]}><planeGeometry args={[4.4, 2.5]} /><meshBasicMaterial map={t.preview} toneMapped={false} /></mesh>
         <mesh position={[-2.9, -1.85, -0.1]} material={dark}><boxGeometry args={[0.4, 1, 0.4]} /></mesh>
         <mesh position={[2.9, -1.85, -0.1]} material={dark}><boxGeometry args={[0.4, 1, 0.4]} /></mesh>
+        <mesh position={[-2.9, -2.32, -0.1]} material={dark}><boxGeometry args={[1.3, 0.16, 0.9]} /></mesh>
+        <mesh position={[2.9, -2.32, -0.1]} material={dark}><boxGeometry args={[1.3, 0.16, 0.9]} /></mesh>
       </group>
 
-      {/* desk mat + keyboard + mouse */}
-      <mesh position={[-0.4, 4.06, -3.7]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[6, 1.6]} />
+      {/* warm bias-light bar behind the setup + subtle cool screen-spill on desk */}
+      <mesh position={[0, 4.32, -5.0]}><boxGeometry args={[9, 0.16, 0.3]} /><meshBasicMaterial color="#ff9f52" toneMapped={false} /></mesh>
+      <mesh position={[0, 4.07, -3.85]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[8.5, 2.0]} />
+        <meshBasicMaterial color="#3f74ab" transparent opacity={0.09} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />
+      </mesh>
+
+      {/* desk mat + keyboard + mouse (fully on the desk) */}
+      <mesh position={[-0.4, 4.06, -3.9]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[6, 1.5]} />
         <meshStandardMaterial color="#161620" roughness={1} />
       </mesh>
-      <mesh position={[-0.6, 4.13, -3.7]} material={dark}><boxGeometry args={[3.4, 0.15, 1]} /></mesh>
-      <mesh position={[2.5, 4.13, -3.7]} material={dark}><boxGeometry args={[0.6, 0.2, 0.9]} /></mesh>
+      <mesh position={[-0.6, 4.13, -3.9]} material={dark}><boxGeometry args={[3.4, 0.15, 1]} /></mesh>
+      <mesh position={[2.4, 4.13, -3.9]} material={dark}><boxGeometry args={[0.6, 0.2, 0.9]} /></mesh>
 
-      {/* studio speakers flanking the monitors (outboard, clear of the screens) */}
+      {/* notebook + pen (tidy, left of the keyboard) */}
+      <group position={[-4.7, 4.11, -3.8]} rotation={[0, 0.22, 0]}>
+        <mesh material={frame}><boxGeometry args={[1.5, 0.14, 1.9]} /></mesh>
+        <mesh position={[0, 0.09, 0.05]}><boxGeometry args={[1.2, 0.02, 1.5]} /><meshStandardMaterial color="#d8cdb4" roughness={1} /></mesh>
+        <mesh position={[0.15, 0.13, -0.1]} rotation={[0, 0, 0.5]} material={metal}><cylinderGeometry args={[0.05, 0.05, 1.2, 8]} /></mesh>
+      </group>
+
+      {/* studio speakers flanking the monitors (rest on desk, clear of screens) */}
       {[-6.2, 6.2].map((x, i) => (
-        <group key={i} position={[x, 5.2, -4.4]} rotation={[0, x > 0 ? 0.25 : -0.25, 0]}>
+        <group key={i} position={[x, 5.2, -4.5]} rotation={[0, x > 0 ? 0.25 : -0.25, 0]}>
           <mesh material={woodDark}><boxGeometry args={[1.4, 2.2, 1]} /></mesh>
           <mesh position={[0, 0.3, 0.52]} material={dark}><circleGeometry args={[0.45, 20]} /></mesh>
           <mesh position={[0, -0.6, 0.52]} material={dark}><circleGeometry args={[0.22, 16]} /></mesh>
         </group>
       ))}
 
-      {/* mug (right, in front of keyboard) + small desk plant (left corner) */}
-      <mesh position={[4.4, 4.35, -3.6]}>
+      {/* mug (right, seated on the desk top) */}
+      <mesh position={[4.2, 4.35, -3.8]}>
         <cylinderGeometry args={[0.28, 0.24, 0.6, 12]} />
         <meshStandardMaterial color="#c85a3c" roughness={0.8} />
       </mesh>
-      <group position={[-5.2, 4.2, -3.7]}><Plant scale={0.28} /></group>
+
+      {/* floor plant (left, between desk and softbox) — decor without desk clutter */}
+      <group position={[-9, 0, -3.4]}><Plant scale={0.95} /></group>
+
+      {/* warm practical light grazing the back wall behind the monitors → depth */}
+      <pointLight color="#ffb267" intensity={2.2} distance={15} decay={1.7} position={[0, 8, -5.2]} />
 
       {/* office chair (below centre, back toward camera) */}
       <group position={[0, 0, -1.8]}>
