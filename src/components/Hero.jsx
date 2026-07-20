@@ -1,4 +1,7 @@
+import { useShowreel } from "./ShowreelModal";
+
 export default function Hero() {
+  const openShowreel = useShowreel();
   return (
     <section id="home" className="hero">
       <div className="container hero-inner">
@@ -16,7 +19,11 @@ export default function Hero() {
             the three companies I've created for — trailers, ads, motion and more.
           </p>
           <div className="hero-cta">
-            <a href="#work" className="btn btn-primary">
+            <button type="button" className="btn btn-primary" onClick={openShowreel}>
+              Play Showreel
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
+            </button>
+            <a href="#work" className="btn btn-ghost">
               View Work
               <svg className="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
             </a>

@@ -7,6 +7,7 @@ const SKILLS = [
   "Sound Design",
   "Storyboarding",
   "Short-form / Social",
+  "Interactive Media / UI",
 ];
 
 const STATS = [
@@ -41,15 +42,23 @@ export default function About() {
               <h2 className="section-title" style={{ marginBottom: 22 }}>
                 Behind the Cut
               </h2>
+              <p className="about-roles">
+                Video Editor · Content Creator · AI Visual Creator · Interactive
+                Media / UI Experience
+              </p>
               <p>
-                I'm Loh Jinn Yip — a video editor and content creator. I create
-                social media content and ads that hold attention, including AI
-                video and AI photo.
+                I'm Loh Jinn Yip — a <strong>Video Editor</strong>,{" "}
+                <strong>Content Creator</strong>,{" "}
+                <strong>AI Visual Creator</strong>, and{" "}
+                <strong>Interactive Media / UI Experience</strong> contributor. I
+                create social media content and ads that hold attention —
+                including AI video and AI photo.
               </p>
               <p>
                 Across three companies I've owned edits end to end — from
-                storyboarding and rough cuts to color and final delivery. This
-                site is where that work lives.
+                storyboarding and rough cuts to color, motion and final delivery
+                — and I bring that same craft to interactive, web-based
+                experiences. This site is where that work lives.
               </p>
               <div className="skills">
                 {SKILLS.map((s) => (
