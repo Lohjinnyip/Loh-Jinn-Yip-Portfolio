@@ -10,6 +10,7 @@
     "predeploy": "npm run build",
     "deploy": "gh-pages -d dist",
     "compress-videos": "node scripts/compress-videos.mjs",
+    "compress-gallery": "node scripts/compress-gallery.mjs",
     "profile": "bash scripts/make-profile.sh"
   },
   "dependencies": {
