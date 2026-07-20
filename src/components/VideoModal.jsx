@@ -276,6 +276,17 @@ export default function VideoModal({
           <div className="meta">
             {companyName} · {project.category} · {project.year}
           </div>
+          <dl className="modal-details">
+            {companyName && (
+              <div><dt>Client</dt><dd>{companyName}</dd></div>
+            )}
+            <div><dt>Year</dt><dd>{project.year}</dd></div>
+            <div><dt>Type of work</dt><dd>{project.category}</dd></div>
+            <div><dt>My role</dt><dd>{project.role || "Video Editor"}</dd></div>
+            {project.tools?.length > 0 && (
+              <div><dt>Tools used</dt><dd>{project.tools.join(" · ")}</dd></div>
+            )}
+          </dl>
           {project.description && <p>{project.description}</p>}
         </div>
 

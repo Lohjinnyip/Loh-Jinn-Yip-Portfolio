@@ -430,12 +430,15 @@ function Studio({ groupRef, softboxRef }) {
     () => ({ timeline: makeTimeline(), preview: makePreview(), poster1: makePoster(0), poster2: makePoster(1) }),
     []
   );
-  const wall = useMemo(() => new THREE.MeshStandardMaterial({ color: "#7a5430", roughness: 1 }), []); // warm amber (brighter)
-  const wallSide = useMemo(() => new THREE.MeshStandardMaterial({ color: "#634121", roughness: 1 }), []);
+  const wall = useMemo(() => new THREE.MeshStandardMaterial({ color: "#8c6338", roughness: 1 }), []); // warm amber (brighter)
+  const wallSide = useMemo(() => new THREE.MeshStandardMaterial({ color: "#734d27", roughness: 1 }), []);
   const wood = useMemo(() => new THREE.MeshStandardMaterial({ color: "#6b4a28", roughness: 0.82 }), []);
   const woodDark = useMemo(() => new THREE.MeshStandardMaterial({ color: "#3a2614", roughness: 0.9 }), []);
   const dark = useMemo(() => new THREE.MeshStandardMaterial({ color: "#1c1c24", roughness: 0.6 }), []);
   const metal = useMemo(() => new THREE.MeshStandardMaterial({ color: "#2a2a34", metalness: 0.35, roughness: 0.5 }), []);
+  // muted mid-dark for the edge framing props (softbox stand + camera) so they
+  // read as soft silhouettes, lower contrast, not stark black shapes
+  const edge = useMemo(() => new THREE.MeshStandardMaterial({ color: "#332d38", roughness: 0.85 }), []);
   const frame = useMemo(() => new THREE.MeshStandardMaterial({ color: "#5c3e22", roughness: 0.85 }), []);
   const leaf = useMemo(() => new THREE.MeshStandardMaterial({ color: "#2f5e3a", roughness: 0.9, side: THREE.DoubleSide }), []);
 
@@ -569,7 +572,7 @@ function Studio({ groupRef, softboxRef }) {
       <group position={[-9, 0, -3.4]}><Plant scale={0.95} /></group>
 
       {/* warm practical light grazing the back wall behind the monitors → depth */}
-      <pointLight color="#ffb267" intensity={2.2} distance={15} decay={1.7} position={[0, 8, -5.2]} />
+      <pointLight color="#ffb267" intensity={3.4} distance={17} decay={1.6} position={[0, 8, -5.2]} />
 
       {/* office chair (below centre, back toward camera) */}
       <group position={[0, 0, -1.8]}>
@@ -586,30 +589,54 @@ function Studio({ groupRef, softboxRef }) {
         })}
       </group>
 
-      {/* softbox key light — LEFT edge, tall stand so it frames the upper-left */}
-      <group position={[-11, 0, -3]}>
-        <mesh position={[0, 5, 0]} material={dark}><cylinderGeometry args={[0.1, 0.1, 10, 8]} /></mesh>
-        {[0, 2.1, 4.2].map((ang, i) => (
-          <mesh key={i} position={[Math.cos(ang) * 0.6, 0.4, Math.sin(ang) * 0.6]} rotation={[0.35 * Math.sin(ang), -ang, -0.35 * Math.cos(ang)]} material={dark}>
-            <cylinderGeometry args={[0.06, 0.06, 1.7, 6]} />
+      {/* LED SOFTBOX on a stand — LEFT edge. Scaled down, pushed outward and
+          dimmed so it frames the page instead of drawing the eye. */}
+      <group position={[-12.4, 0, -3.2]} scale={0.82}>
+        {/* 3-leg tripod base */}
+        {[0, 2.09, 4.19].map((ang, i) => (
+          <mesh key={i} position={[Math.cos(ang) * 0.75, 0.95, Math.sin(ang) * 0.75]} rotation={[0.3 * Math.sin(ang), -ang, -0.3 * Math.cos(ang)]} material={edge}>
+            <cylinderGeometry args={[0.07, 0.05, 2.7, 6]} />
           </mesh>
         ))}
-        <group position={[0, 10, 0]} rotation={[0.12, 0.5, 0]}>
-          <mesh position={[0, 0, -0.06]} material={dark}><planeGeometry args={[3.4, 3.4]} /></mesh>
-          <mesh ref={softboxRef}><planeGeometry args={[3, 3]} /><meshBasicMaterial color="#ffe6b0" toneMapped={false} /></mesh>
+        {/* riser pole */}
+        <mesh position={[0, 5.4, 0]} material={metal}><cylinderGeometry args={[0.1, 0.1, 9, 10]} /></mesh>
+        {/* tilting softbox head, angled at the desk */}
+        <group position={[0, 9.6, 0]} rotation={[0.16, 0.55, 0]}>
+          <mesh position={[0, 0, -0.35]} material={edge}><boxGeometry args={[3.2, 3.2, 0.6]} /></mesh>
+          <mesh ref={softboxRef} position={[0, 0, 0.02]}><planeGeometry args={[2.7, 2.7]} /><meshBasicMaterial color="#ffe6b0" toneMapped={false} /></mesh>
+          {/* thin outer frame + grid cross → reads as a softbox */}
+          <mesh position={[0, 1.45, 0.04]} material={edge}><boxGeometry args={[3.0, 0.18, 0.12]} /></mesh>
+          <mesh position={[0, -1.45, 0.04]} material={edge}><boxGeometry args={[3.0, 0.18, 0.12]} /></mesh>
+          <mesh position={[-1.45, 0, 0.04]} material={edge}><boxGeometry args={[0.18, 3.0, 0.12]} /></mesh>
+          <mesh position={[1.45, 0, 0.04]} material={edge}><boxGeometry args={[0.18, 3.0, 0.12]} /></mesh>
+          <mesh position={[0, 0, 0.05]} material={edge}><boxGeometry args={[0.09, 2.7, 0.06]} /></mesh>
+          <mesh position={[0, 0, 0.05]} material={edge}><boxGeometry args={[2.7, 0.09, 0.06]} /></mesh>
         </group>
       </group>
 
-      {/* camera on tripod — RIGHT edge, aimed at the desk */}
-      <group position={[11, 0, -3]}>
-        <mesh position={[0, 6, 0]} material={dark}><boxGeometry args={[1.9, 1.2, 1]} /></mesh>
-        <mesh position={[-0.9, 6, 0]} rotation={[0, 0, Math.PI / 2]} material={dark}><cylinderGeometry args={[0.32, 0.32, 0.8, 12]} /></mesh>
-        <mesh position={[0.05, 6.75, 0]} material={dark}><boxGeometry args={[0.9, 0.5, 0.06]} /></mesh>
-        {[-0.5, 0.5].map((sx) =>
-          [-0.5, 0.5].map((sz) => (
-            <mesh key={`${sx}-${sz}`} position={[sx, 2.6, sz]} rotation={[sz * 0.22, 0, -sx * 0.22]} material={dark}><cylinderGeometry args={[0.08, 0.08, 6, 8]} /></mesh>
-          ))
-        )}
+      {/* CINEMA CAMERA on a tripod — RIGHT edge. Scaled down, pushed outward,
+          low-contrast silhouette so it frames without distracting. */}
+      <group position={[12.4, 0, -3.2]} scale={0.82}>
+        {/* 3-leg tripod */}
+        {[0, 2.09, 4.19].map((ang, i) => (
+          <mesh key={i} position={[Math.cos(ang) * 0.85, 2.9, Math.sin(ang) * 0.85]} rotation={[0.26 * Math.sin(ang), -ang, -0.26 * Math.cos(ang)]} material={edge}>
+            <cylinderGeometry args={[0.09, 0.07, 6, 6]} />
+          </mesh>
+        ))}
+        {/* centre column + fluid head */}
+        <mesh position={[0, 5.7, 0]} material={metal}><cylinderGeometry args={[0.12, 0.12, 1.2, 8]} /></mesh>
+        <mesh position={[0, 6.3, 0]} material={edge}><boxGeometry args={[0.8, 0.5, 0.8]} /></mesh>
+        {/* camera body + lens + handle + flip screen (lens faces the desk) */}
+        <group position={[0, 6.8, 0]}>
+          <mesh material={edge}><boxGeometry args={[1.7, 1.3, 1.1]} /></mesh>
+          <mesh position={[-1.0, -0.05, 0]} rotation={[0, 0, Math.PI / 2]} material={edge}><cylinderGeometry args={[0.34, 0.34, 0.7, 14]} /></mesh>
+          <mesh position={[-1.45, -0.05, 0]} rotation={[0, 0, Math.PI / 2]} material={edge}><cylinderGeometry args={[0.44, 0.36, 0.5, 14]} /></mesh>
+          <mesh position={[0.1, 0.85, 0]} material={edge}><boxGeometry args={[1.1, 0.14, 0.24]} /></mesh>
+          <mesh position={[-0.4, 0.6, 0]} material={edge}><boxGeometry args={[0.14, 0.4, 0.24]} /></mesh>
+          <mesh position={[0.6, 0.6, 0]} material={edge}><boxGeometry args={[0.14, 0.4, 0.24]} /></mesh>
+          <mesh position={[0.55, 0.05, 0.62]} material={edge}><boxGeometry args={[0.9, 0.6, 0.06]} /></mesh>
+          <mesh position={[0.9, 0.35, 0.56]}><circleGeometry args={[0.06, 12]} /><meshBasicMaterial color="#e5484d" toneMapped={false} /></mesh>
+        </group>
       </group>
     </group>
   );
@@ -725,9 +752,9 @@ function Rig({ scroll, reduced, moonRef, warmRef, deskRef, softboxRef, planRef, 
     // hazed orange. Studio warmth comes from walls + lights, not fog tint.
     scene.fog.color.copy(CITY_FOG);
     if (moonRef.current) moonRef.current.intensity = 0.6 + 0.2 * (1 - interior);
-    if (warmRef.current) warmRef.current.intensity = 1.3 + interior * 3.4;
-    if (deskRef.current) deskRef.current.intensity = 0.6 + smooth(0.55, 0.98, p) * 2.2;
-    if (softboxRef.current) softboxRef.current.material.color.setRGB(1, 0.89, 0.68).multiplyScalar(0.5 + interior * 0.45);
+    if (warmRef.current) warmRef.current.intensity = 2.0 + interior * 4.4;
+    if (deskRef.current) deskRef.current.intensity = 1.0 + smooth(0.55, 0.98, p) * 3.0;
+    if (softboxRef.current) softboxRef.current.material.color.setRGB(1, 0.89, 0.68).multiplyScalar(0.32 + interior * 0.3);
 
     if (debug && debug.current) {
       const zone = p < plan.keys[1].t ? "CITY" : p < plan.keys[3].t ? "TRANSITION" : "STUDIO";
@@ -817,7 +844,7 @@ export default function CinematicBackground() {
           isMobile={isMobile}
         />
 
-        <ambientLight color={"#8a6a48"} intensity={1.15} />
+        <ambientLight color={"#9a7a54"} intensity={1.55} />
         <directionalLight ref={moonRef} color={MOON_COL} intensity={0.6} position={[12, 24, -30]} />
         {/* front-centre warm wash so the whole tall wall reads warm + even */}
         <pointLight ref={warmRef} color={WARM_KEY} intensity={0.9} position={[0, 13, 6]} distance={110} decay={1.0} />

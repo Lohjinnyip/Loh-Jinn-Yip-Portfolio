@@ -8,13 +8,14 @@ import Marquee from "./components/Marquee";
 import Gallery from "./components/Gallery";
 import About from "./components/About";
 import Contact from "./components/Contact";
+import { ShowreelProvider } from "./components/ShowreelModal";
 import { useReveal } from "./hooks/useScrollSpy";
 
 function App() {
   useReveal();
 
   return (
-    <>
+    <ShowreelProvider>
       <Loader />
       <CinematicBackground />
       <ScrollBar />
@@ -34,7 +35,7 @@ function App() {
           © {new Date().getFullYear()} Loh Jinn Yip · Video Editor & Content Creator
         </div>
       </footer>
-    </>
+    </ShowreelProvider>
   );
 }
 

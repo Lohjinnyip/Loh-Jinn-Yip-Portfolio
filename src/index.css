@@ -649,6 +649,25 @@ img, video { display: block; max-width: 100%; }
 .card-title { font-family: "Space Grotesk", sans-serif; font-weight: 600; font-size: 1.02rem; margin-top: 10px; color: #fff; }
 .card-meta { font-size: 0.8rem; color: var(--text-muted); margin-top: 3px; }
 
+/* ---- featured showreel card (first card, opens the showreel modal) ---- */
+.card--showreel { border-color: rgba(34, 211, 238, 0.45); }
+.card--showreel:hover { border-color: var(--card-accent, var(--cyan)); }
+.card-thumb--reel {
+  background: radial-gradient(120% 120% at 30% 20%, #123a52, #0d2036 55%, #0a1020) !important;
+}
+.card-thumb--reel::after {
+  content: ""; position: absolute; inset: 0;
+  background:
+    radial-gradient(60% 80% at 78% 30%, rgba(34,211,238,0.20), transparent 70%),
+    radial-gradient(50% 70% at 20% 85%, rgba(96,165,250,0.18), transparent 70%);
+}
+/* the showreel card advertises itself → play button always visible */
+.card--showreel .play-btn {
+  opacity: 1; transform: translate(-50%, -50%) scale(1);
+  background: var(--btn-grad); color: #06101f; border-color: transparent;
+  box-shadow: var(--glow-accent);
+}
+
 .empty { grid-column: 1 / -1; text-align: center; color: var(--text-muted); padding: 60px 0; }
 
 /* ---------- GALLERY ---------- */
@@ -759,8 +778,13 @@ img, video { display: block; max-width: 100%; }
 /* compact panel so it occupies the upper screen, leaving the studio window visible below */
 .about .plate.wide { padding-top: 30px; padding-bottom: 30px; }
 .about-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 40px; align-items: start; }
-.about p { color: var(--text-muted); line-height: 1.75; font-size: 1.05rem; }
-.about p + p { margin-top: 16px; }
+.about p { color: var(--text-muted); line-height: 1.85; font-size: 1.12rem; }
+.about p + p { margin-top: 18px; }
+.about p strong { color: var(--text); font-weight: 600; }
+.about-roles {
+  color: var(--cyan) !important; font-size: 0.9rem !important;
+  letter-spacing: 0.06em; font-weight: 600; margin-bottom: 6px;
+}
 .skills { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 26px; }
 .skill {
   font-size: 0.84rem; padding: 8px 15px; border-radius: var(--radius-pill);
@@ -955,6 +979,19 @@ body.modal-open .top-feather {
 .modal-body h3 { font-size: 1.3rem; }
 .modal-body .meta { color: var(--cyan); font-size: 0.82rem; letter-spacing: 0.1em; text-transform: uppercase; margin: 6px 0 12px; }
 .modal-body p { color: var(--text-muted); line-height: 1.6; margin: 0; }
+
+/* ---- project detail rows (client / year / type / role / tools) ---- */
+.modal-details {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px 20px;
+  margin: 0 0 14px; padding: 14px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
+}
+.modal-details div { display: flex; flex-direction: column; gap: 2px; }
+.modal-details dt {
+  font-size: 0.64rem; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--text-muted); font-weight: 600;
+}
+.modal-details dd { margin: 0; color: var(--text); font-size: 0.92rem; }
+@media (max-width: 560px) { .modal-details { grid-template-columns: 1fr; } }
 .modal-close {
   position: absolute; top: 12px; right: 12px; z-index: 101;
   width: 42px; height: 42px; border-radius: 50%; border: 1px solid var(--line);

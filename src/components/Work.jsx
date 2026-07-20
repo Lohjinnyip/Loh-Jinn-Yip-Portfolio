@@ -2,11 +2,13 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { COMPANIES, PROJECTS } from "../data/projects";
 import VideoCard from "./VideoCard";
 import VideoModal from "./VideoModal";
+import { useShowreel } from "./ShowreelModal";
 
 // Duration of the card swap animation — MUST match the CSS transition on `.grid`.
 const ANIM_MS = 200;
 
 export default function Work() {
+  const openShowreel = useShowreel();
   const [company, setCompany] = useState(COMPANIES[0].id); // the selected tab
   const [display, setDisplay] = useState(COMPANIES[0].id); // company whose cards render
   const [phase, setPhase] = useState("in"); // "in" | "out" | "enter"
@@ -92,6 +94,24 @@ export default function Work() {
         </div>
 
         <div className={gridClass}>
+          {/* Featured showreel — always the first card, opens the showreel modal */}
+          <button
+            className="card card--showreel"
+            style={{ "--card-accent": "#22d3ee" }}
+            onClick={openShowreel}
+            aria-label="Play 2026 Creative Showreel"
+          >
+            <div className="card-thumb placeholder card-thumb--reel" />
+            <span className="play-btn">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
+            </span>
+            <div className="card-overlay">
+              <span className="card-badge">Showreel</span>
+              <span className="card-title">2026 Creative Showreel</span>
+              <span className="card-meta">Video Editing · Content Creation · AI Visuals</span>
+            </div>
+          </button>
+
           {visible.map((p, i) => (
             <VideoCard
               key={p.id}
