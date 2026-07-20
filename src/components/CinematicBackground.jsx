@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 
@@ -424,14 +424,43 @@ function Exterior({ count, scroll, reduced }) {
   );
 }
 
+// Half-width (world units) of the framed studio at the side-prop depth (z=-3.2),
+// for the CURRENT aspect. Mirrors the framing math in Rig.build() so we can keep
+// the side props just inside the visible frame on every screen.
+const PROP_Z = -4.3; // same floor depth as the desk → props share its ground line
+// soft contact shadow (two stacked discs) so a prop's feet read as touching floor
+function FloorShadow({ x, z, r }) {
+  return (
+    <group>
+      <mesh position={[x, 0.03, z]} rotation={[-Math.PI / 2, 0, 0]}>
+        <circleGeometry args={[r * 1.6, 24]} />
+        <meshBasicMaterial color="#000000" transparent opacity={0.14} depthWrite={false} />
+      </mesh>
+      <mesh position={[x, 0.04, z]} rotation={[-Math.PI / 2, 0, 0]}>
+        <circleGeometry args={[r, 24]} />
+        <meshBasicMaterial color="#000000" transparent opacity={0.32} depthWrite={false} />
+      </mesh>
+    </group>
+  );
+}
+function studioFrameHalf(aspect) {
+  const fov = aspect < 1 ? 42 : 32;
+  const vF = (fov * Math.PI) / 180;
+  const hF = 2 * Math.atan(Math.tan(vF / 2) * aspect);
+  const ddW = (ROOM.w * 0.97) / 2 / Math.tan(hF / 2);
+  const ddH = (ROOM.h * 0.97) / 2 / Math.tan(vF / 2);
+  const camZ = ROOM.back + Math.min(ddW, ddH);
+  return (camZ - PROP_Z) * Math.tan(hF / 2);
+}
+
 // ---- STUDIO: shallow front-facing stage -------------------------------------
-function Studio({ groupRef, softboxRef }) {
+function Studio({ groupRef, softboxRef, isMobile }) {
   const t = useMemo(
     () => ({ timeline: makeTimeline(), preview: makePreview(), poster1: makePoster(0), poster2: makePoster(1) }),
     []
   );
   const wall = useMemo(() => new THREE.MeshStandardMaterial({ color: "#8c6338", roughness: 1 }), []); // warm amber (brighter)
-  const wallSide = useMemo(() => new THREE.MeshStandardMaterial({ color: "#734d27", roughness: 1 }), []);
+  const wallSide = useMemo(() => new THREE.MeshStandardMaterial({ color: "#835a2f", roughness: 1 }), []); // closer to front wall → less "separate panel"
   const wood = useMemo(() => new THREE.MeshStandardMaterial({ color: "#6b4a28", roughness: 0.82 }), []);
   const woodDark = useMemo(() => new THREE.MeshStandardMaterial({ color: "#3a2614", roughness: 0.9 }), []);
   const dark = useMemo(() => new THREE.MeshStandardMaterial({ color: "#1c1c24", roughness: 0.6 }), []);
@@ -464,11 +493,31 @@ function Studio({ groupRef, softboxRef }) {
     </group>
   );
 
+  // Keep the side props (softbox / camera / plant) INSIDE the framed studio
+  // width with a safe margin, recomputed on resize. Too-narrow frames (portrait
+  // tablets) or mobile hide the decorative props rather than crop them.
+  const [frameHalf, setFrameHalf] = useState(11);
+  useEffect(() => {
+    const compute = () =>
+      setFrameHalf(studioFrameHalf(window.innerWidth / Math.max(1, window.innerHeight)));
+    compute();
+    window.addEventListener("resize", compute);
+    return () => window.removeEventListener("resize", compute);
+  }, []);
+  const sideScale = isMobile ? 0.5 : 0.66;
+  // sit just inside the frame but pulled IN toward the room (bigger margin) so
+  // they frame the desk from within, near — not on — the side walls.
+  const fit = frameHalf - 1.3 - sideScale * 1.05;
+  const sideX = Math.min(10.4, fit);
+  const showSides = !isMobile && fit >= 8; // else too narrow → would clip the desk/edge
+  const plantX = Math.min(8.6, sideX - 1.4);
+
   return (
     <group ref={groupRef}>
-      {/* shallow floor + short side returns (NO front wall, NO ceiling) */}
-      <mesh position={[0, 0, retZ]} rotation={[-Math.PI / 2, 0, 0]} material={wood}>
-        <planeGeometry args={[ROOM.w, RET + 1.5]} />
+      {/* floor — extended forward so it clearly runs UNDER the side props and
+          meets the side walls (grounds the softbox / tripod, no floating) */}
+      <mesh position={[0, 0, -3]} rotation={[-Math.PI / 2, 0, 0]} material={wood}>
+        <planeGeometry args={[ROOM.w, 8]} />
       </mesh>
       <mesh position={[-HW, ROOM.h / 2, retZ]} rotation={[0, Math.PI / 2, 0]} material={wallSide}>
         <planeGeometry args={[RET, ROOM.h]} />
@@ -569,7 +618,16 @@ function Studio({ groupRef, softboxRef }) {
       </mesh>
 
       {/* floor plant (left, between desk and softbox) — decor without desk clutter */}
-      <group position={[-9, 0, -3.4]}><Plant scale={0.95} /></group>
+      {showSides && <group position={[-plantX, 0, -3.4]}><Plant scale={0.75} /></group>}
+
+      {/* contact shadows so the side props read as standing ON the studio floor */}
+      {showSides && (
+        <>
+          <FloorShadow x={-sideX} z={PROP_Z} r={2.1} />
+          <FloorShadow x={sideX} z={PROP_Z} r={1.9} />
+          <FloorShadow x={-plantX} z={-3.4} r={1.0} />
+        </>
+      )}
 
       {/* warm practical light grazing the back wall behind the monitors → depth */}
       <pointLight color="#ffb267" intensity={3.4} distance={17} decay={1.6} position={[0, 8, -5.2]} />
@@ -589,55 +647,40 @@ function Studio({ groupRef, softboxRef }) {
         })}
       </group>
 
-      {/* LED SOFTBOX on a stand — LEFT edge. Scaled down, pushed outward and
-          dimmed so it frames the page instead of drawing the eye. */}
-      <group position={[-12.4, 0, -3.2]} scale={0.82}>
-        {/* 3-leg tripod base */}
-        {[0, 2.09, 4.19].map((ang, i) => (
-          <mesh key={i} position={[Math.cos(ang) * 0.75, 0.95, Math.sin(ang) * 0.75]} rotation={[0.3 * Math.sin(ang), -ang, -0.3 * Math.cos(ang)]} material={edge}>
-            <cylinderGeometry args={[0.07, 0.05, 2.7, 6]} />
+      {/* softbox key light — LEFT edge (original simple prop, kept scale +
+          outward placement + low-contrast material + floor anchoring) */}
+      {showSides && (
+      <group position={[-sideX, 0, PROP_Z]} scale={sideScale}>
+        <mesh position={[0, 4.6, 0]} material={edge}><cylinderGeometry args={[0.1, 0.1, 9.2, 8]} /></mesh>
+        {[0, 2.1, 4.2].map((ang, i) => (
+          <mesh key={i} position={[Math.cos(ang) * 0.6, 0.4, Math.sin(ang) * 0.6]} rotation={[0.35 * Math.sin(ang), -ang, -0.35 * Math.cos(ang)]} material={edge}>
+            <cylinderGeometry args={[0.06, 0.06, 1.7, 6]} />
           </mesh>
         ))}
-        {/* riser pole */}
-        <mesh position={[0, 5.4, 0]} material={metal}><cylinderGeometry args={[0.1, 0.1, 9, 10]} /></mesh>
-        {/* tilting softbox head, angled at the desk */}
-        <group position={[0, 9.6, 0]} rotation={[0.16, 0.55, 0]}>
-          <mesh position={[0, 0, -0.35]} material={edge}><boxGeometry args={[3.2, 3.2, 0.6]} /></mesh>
-          <mesh ref={softboxRef} position={[0, 0, 0.02]}><planeGeometry args={[2.7, 2.7]} /><meshBasicMaterial color="#ffe6b0" toneMapped={false} /></mesh>
-          {/* thin outer frame + grid cross → reads as a softbox */}
-          <mesh position={[0, 1.45, 0.04]} material={edge}><boxGeometry args={[3.0, 0.18, 0.12]} /></mesh>
-          <mesh position={[0, -1.45, 0.04]} material={edge}><boxGeometry args={[3.0, 0.18, 0.12]} /></mesh>
-          <mesh position={[-1.45, 0, 0.04]} material={edge}><boxGeometry args={[0.18, 3.0, 0.12]} /></mesh>
-          <mesh position={[1.45, 0, 0.04]} material={edge}><boxGeometry args={[0.18, 3.0, 0.12]} /></mesh>
-          <mesh position={[0, 0, 0.05]} material={edge}><boxGeometry args={[0.09, 2.7, 0.06]} /></mesh>
-          <mesh position={[0, 0, 0.05]} material={edge}><boxGeometry args={[2.7, 0.09, 0.06]} /></mesh>
+        {/* L-yoke: step right, then forward — both stay BEHIND the panel (no dot),
+            and the head ends up slightly to the RIGHT of the stand */}
+        <mesh position={[0.4, 9.2, 0]} rotation={[0, 0, Math.PI / 2]} material={edge}><cylinderGeometry args={[0.09, 0.09, 0.9, 8]} /></mesh>
+        <mesh position={[0.8, 9.2, 0.72]} rotation={[Math.PI / 2, 0, 0]} material={edge}><cylinderGeometry args={[0.09, 0.09, 1.45, 8]} /></mesh>
+        <group position={[0.8, 9.2, 1.55]} rotation={[0.12, 0.5, 0]}>
+          <mesh position={[0, 0, -0.06]} material={edge}><planeGeometry args={[3.4, 3.4]} /></mesh>
+          <mesh ref={softboxRef}><planeGeometry args={[3, 3]} /><meshBasicMaterial color="#ffe6b0" toneMapped={false} /></mesh>
         </group>
       </group>
+      )}
 
-      {/* CINEMA CAMERA on a tripod — RIGHT edge. Scaled down, pushed outward,
-          low-contrast silhouette so it frames without distracting. */}
-      <group position={[12.4, 0, -3.2]} scale={0.82}>
-        {/* 3-leg tripod */}
-        {[0, 2.09, 4.19].map((ang, i) => (
-          <mesh key={i} position={[Math.cos(ang) * 0.85, 2.9, Math.sin(ang) * 0.85]} rotation={[0.26 * Math.sin(ang), -ang, -0.26 * Math.cos(ang)]} material={edge}>
-            <cylinderGeometry args={[0.09, 0.07, 6, 6]} />
-          </mesh>
-        ))}
-        {/* centre column + fluid head */}
-        <mesh position={[0, 5.7, 0]} material={metal}><cylinderGeometry args={[0.12, 0.12, 1.2, 8]} /></mesh>
-        <mesh position={[0, 6.3, 0]} material={edge}><boxGeometry args={[0.8, 0.5, 0.8]} /></mesh>
-        {/* camera body + lens + handle + flip screen (lens faces the desk) */}
-        <group position={[0, 6.8, 0]}>
-          <mesh material={edge}><boxGeometry args={[1.7, 1.3, 1.1]} /></mesh>
-          <mesh position={[-1.0, -0.05, 0]} rotation={[0, 0, Math.PI / 2]} material={edge}><cylinderGeometry args={[0.34, 0.34, 0.7, 14]} /></mesh>
-          <mesh position={[-1.45, -0.05, 0]} rotation={[0, 0, Math.PI / 2]} material={edge}><cylinderGeometry args={[0.44, 0.36, 0.5, 14]} /></mesh>
-          <mesh position={[0.1, 0.85, 0]} material={edge}><boxGeometry args={[1.1, 0.14, 0.24]} /></mesh>
-          <mesh position={[-0.4, 0.6, 0]} material={edge}><boxGeometry args={[0.14, 0.4, 0.24]} /></mesh>
-          <mesh position={[0.6, 0.6, 0]} material={edge}><boxGeometry args={[0.14, 0.4, 0.24]} /></mesh>
-          <mesh position={[0.55, 0.05, 0.62]} material={edge}><boxGeometry args={[0.9, 0.6, 0.06]} /></mesh>
-          <mesh position={[0.9, 0.35, 0.56]}><circleGeometry args={[0.06, 12]} /><meshBasicMaterial color="#e5484d" toneMapped={false} /></mesh>
-        </group>
+      {/* camera on tripod — RIGHT edge (original simple prop, same kept params) */}
+      {showSides && (
+      <group position={[sideX, 0, PROP_Z]} scale={sideScale}>
+        <mesh position={[0, 6.2, 0]} material={edge}><boxGeometry args={[2.7, 1.7, 1.35]} /></mesh>
+        <mesh position={[-1.5, 6.2, 0]} rotation={[0, 0, Math.PI / 2]} material={edge}><cylinderGeometry args={[0.46, 0.46, 1.1, 14]} /></mesh>
+        <mesh position={[0.1, 7.25, 0]} material={edge}><boxGeometry args={[1.2, 0.7, 0.07]} /></mesh>
+        {[-0.5, 0.5].map((sx) =>
+          [-0.5, 0.5].map((sz) => (
+            <mesh key={`${sx}-${sz}`} position={[sx, 2.6, sz]} rotation={[sz * 0.22, 0, -sx * 0.22]} material={edge}><cylinderGeometry args={[0.08, 0.08, 6, 8]} /></mesh>
+          ))
+        )}
       </group>
+      )}
     </group>
   );
 }
@@ -851,7 +894,7 @@ export default function CinematicBackground() {
         <pointLight ref={deskRef} color={"#ffd9a0"} intensity={0.4} position={[0, 8, -2]} distance={30} decay={1.4} />
 
         <Exterior count={count} scroll={scroll} reduced={reduced} />
-        <Studio groupRef={studioRef} softboxRef={softboxRef} />
+        <Studio groupRef={studioRef} softboxRef={softboxRef} isMobile={isMobile} />
       </Canvas>
 
       <div className="vignette" />
