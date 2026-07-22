@@ -7,8 +7,10 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 
-// Self-hosted showreel. Drop the file at public/videos/showreel.mp4.
-const SHOWREEL_SRC = "/videos/showreel.mp4";
+// Self-hosted showreel. File lives at
+// public/videos/Loh Jinn Yip Showreal Crave Asia.mp4
+// (spaces URL-encoded so the browser can fetch it directly).
+const SHOWREEL_SRC = "/videos/Loh%20Jinn%20Yip%20Showreal%20Crave%20Asia.mp4";
 
 // ---- shared opener so the Hero button AND the Work card open the same modal --
 const ShowreelContext = createContext(() => {});
@@ -26,7 +28,8 @@ export function ShowreelProvider({ children }) {
 }
 
 // Centered, responsive video modal. ESC / close button / click-outside close it.
-// Autoplays MUTED (never with sound) — the viewer unmutes via the controls.
+// Autoplays MUTED so it starts instantly on every browser (muted autoplay is
+// always allowed) without blasting sound — the viewer unmutes via the controls.
 function ShowreelModal({ onClose }) {
   const [failed, setFailed] = useState(false);
 
@@ -57,7 +60,7 @@ function ShowreelModal({ onClose }) {
               <div className="modal-novideo">
                 Showreel coming soon — add your file at
                 <br />
-                <code>public/videos/showreel.mp4</code>
+                <code>public/videos/Loh Jinn Yip Showreal Crave Asia.mp4</code>
               </div>
             ) : (
               <video
@@ -76,10 +79,6 @@ function ShowreelModal({ onClose }) {
           <div className="modal-body">
             <h3>2026 Creative Showreel</h3>
             <div className="meta">Video Editing · Content Creation · AI Visuals</div>
-            <p>
-              A selection of my recent editing, motion and AI-driven visual work.
-              Unmute for sound.
-            </p>
           </div>
         </div>
       </div>

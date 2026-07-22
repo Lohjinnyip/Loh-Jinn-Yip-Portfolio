@@ -8,6 +8,19 @@ export function useScrollSpy(sectionIds, offset = 90) {
   useEffect(() => {
     const onScroll = () => {
       setScrolled(window.scrollY > 24);
+
+      // At (or within a hair of) the very bottom the page can't scroll far
+      // enough for the last section's top to cross the offset line — so a short
+      // final section (Contact + footer < viewport) would never activate.
+      // Snap to the last section once we've hit the bottom.
+      const atBottom =
+        window.innerHeight + window.scrollY >=
+        document.documentElement.scrollHeight - 2;
+      if (atBottom) {
+        setActive(sectionIds[sectionIds.length - 1]);
+        return;
+      }
+
       const pos = window.scrollY + offset;
       let current = sectionIds[0];
       for (const id of sectionIds) {

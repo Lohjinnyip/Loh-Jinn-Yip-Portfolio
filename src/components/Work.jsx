@@ -94,23 +94,27 @@ export default function Work() {
         </div>
 
         <div className={gridClass}>
-          {/* Featured showreel — always the first card, opens the showreel modal */}
-          <button
-            className="card card--showreel"
-            style={{ "--card-accent": "#22d3ee" }}
-            onClick={openShowreel}
-            aria-label="Play 2026 Creative Showreel"
-          >
-            <div className="card-thumb placeholder card-thumb--reel" />
-            <span className="play-btn">
-              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
-            </span>
-            <div className="card-overlay">
-              <span className="card-badge">Showreel</span>
-              <span className="card-title">2026 Creative Showreel</span>
-              <span className="card-meta">Video Editing · Content Creation · AI Visuals</span>
-            </div>
-          </button>
+          {/* Featured showreel — first card, Crave Asia tab only. Opens the modal. */}
+          {display === COMPANIES[0].id && (
+            <button
+              className="card card--showreel"
+              style={{ "--card-accent": "#22d3ee" }}
+              onClick={openShowreel}
+              aria-label="Play 2026 Creative Showreel"
+            >
+              <div className="card-thumb">
+                <img src="/thumbnails/showreel-cover.jpg" alt="" loading="lazy" />
+              </div>
+              <span className="play-btn">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
+              </span>
+              <div className="card-overlay">
+                <span className="card-badge">Showreel</span>
+                <span className="card-title">2026 Creative Showreel</span>
+                <span className="card-meta">Video Editing · Content Creation · AI Visuals</span>
+              </div>
+            </button>
+          )}
 
           {visible.map((p, i) => (
             <VideoCard

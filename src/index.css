@@ -661,11 +661,28 @@ img, video { display: block; max-width: 100%; }
     radial-gradient(60% 80% at 78% 30%, rgba(34,211,238,0.20), transparent 70%),
     radial-gradient(50% 70% at 20% 85%, rgba(96,165,250,0.18), transparent 70%);
 }
-/* the showreel card advertises itself → play button always visible */
+/* showreel cover = first frame of the reel; scrim keeps the overlay readable */
+.card--showreel .card-thumb img {
+  width: 100%; height: 100%; object-fit: cover; display: block;
+}
+.card--showreel .card-thumb::after {
+  content: ""; position: absolute; inset: 0;
+  /* light scrim — keeps the cover bright/readable; the card-overlay gradient
+     already darkens the lower strip enough for the title + meta */
+  background: linear-gradient(180deg, rgba(5,8,20,0) 0%, rgba(5,8,20,0.10) 62%, rgba(5,8,20,0.5) 100%);
+}
+/* the showreel card advertises itself → play icon always visible, but SUBTLE
+   (semi-transparent glass, not a solid fill) so "LOH JINN YIP" reads through */
 .card--showreel .play-btn {
   opacity: 1; transform: translate(-50%, -50%) scale(1);
-  background: var(--btn-grad); color: #06101f; border-color: transparent;
-  box-shadow: var(--glow-accent);
+  width: 54px; height: 54px;
+  background: rgba(8, 12, 24, 0.42); color: #fff;
+  border-color: rgba(255, 255, 255, 0.55);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+}
+.card--showreel:hover .play-btn {
+  background: var(--btn-grad); color: #06101f;
+  border-color: transparent; box-shadow: var(--glow-accent);
 }
 
 .empty { grid-column: 1 / -1; text-align: center; color: var(--text-muted); padding: 60px 0; }
@@ -1048,7 +1065,9 @@ body.modal-open .top-feather {
 @media (max-width: 640px) {
   .section { padding: 70px 0; }
   .grid { grid-template-columns: 1fr; }
-  .gallery-grid { grid-template-columns: 1fr; }
+  /* keep the gallery at 2 columns on phones so it doesn't become an endlessly
+     tall single-file stack; squares just get smaller */
+  .gallery-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
   .gallery-item.wide, .gallery-item.tall, .gallery-item.big {
     grid-column: auto; grid-row: auto;
   }
