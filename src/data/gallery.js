@@ -37,4 +37,11 @@ export const GALLERY = [
   { id: "g12", src: "/gallery/mashita-box-2.webp", alt: "UCSI - Mashita" },
   { id: "g13", src: "/gallery/sufian-chair-1.webp", alt: "UCSI - Sufian" },
   { id: "g14", src: "/gallery/sufian-box-2.webp", alt: "UCSI - Sufian" },
+  // Personal — "on the road" set
+  { id: "g15", src: "/gallery/personal-on-the-road-1.webp", alt: "Personal - on the road" },
+  { id: "g16", src: "/gallery/personal-on-the-road-2.webp", alt: "Personal - on the road" },
+  { id: "g17", src: "/gallery/personal-on-the-road-3.webp", alt: "Personal - on the road" },
+  { id: "g18", src: "/gallery/personal-on-the-road-4.webp", alt: "Personal - on the road" },
+  { id: "g19", src: "/gallery/personal-on-the-road-5.webp", alt: "Personal - on the road" },
+  { id: "g20", src: "/gallery/personal-on-the-road-6.webp", alt: "Personal - on the road" },
 ];
