@@ -856,7 +856,9 @@ img, video { display: block; max-width: 100%; }
   justify-content: flex-end;
   padding-bottom: 52px; /* trim the section's 96px bottom pad → sit slightly lower */
 }
-.contact h2 { font-size: clamp(2rem, 6vw, 4rem); font-weight: 700; margin-bottom: 18px; }
+/* sized + nowrap so "Let's create something worth watching." stays on ONE line
+   on tablet/desktop; it wraps naturally on phones (see the 640px rule below) */
+.contact h2 { font-size: clamp(1.7rem, 4.4vw, 3rem); font-weight: 700; margin-bottom: 18px; white-space: nowrap; }
 .contact p { color: var(--text-muted); max-width: 520px; margin: 0 auto 30px; }
 /* email provider chooser */
 .email-menu { position: relative; }
@@ -1064,6 +1066,15 @@ body.modal-open .top-feather {
 }
 @media (max-width: 640px) {
   .section { padding: 70px 0; }
+  /* too narrow for one line on phones → allow the contact heading to wrap */
+  .contact h2 { white-space: normal; }
+  /* 4 tabs wrap into a lopsided pill on phones → lay them out as an even 2×2
+     grid that fills the row, each tab centered in its cell */
+  .filters {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 6px; width: 100%; border-radius: 18px;
+  }
+  .filter { text-align: center; padding: 11px 10px; }
   .grid { grid-template-columns: 1fr; }
   /* keep the gallery at 2 columns on phones so it doesn't become an endlessly
      tall single-file stack; squares just get smaller */

@@ -122,7 +122,8 @@ export default function Contact() {
         <div className="plate center reveal" style={{ textAlign: "center" }}>
           <p className="eyebrow">Contact</p>
           <h2>
-            Let's make something <span className="gradient-text">after dark.</span>
+            Let's create something{" "}
+            <span className="gradient-text">worth watching.</span>
           </h2>
           <p style={{ marginBottom: 0 }}>
             Have a project, a reel to cut, or a collaboration in mind? I'm one

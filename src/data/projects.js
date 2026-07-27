@@ -28,7 +28,8 @@
 export const COMPANIES = [
   { id: "company-a", name: "Crave Asia", accent: "#38bdf8" }, // sky blue
   { id: "company-b", name: "Shipped Beyond", accent: "#3b82f6" }, // blue
-  { id: "company-c", name: "Company Three", accent: "#60a5fa" }, // light blue
+  { id: "company-c", name: "Adora Clinic", accent: "#60a5fa" }, // light blue
+  { id: "personal", name: "Personal Work", accent: "#a855f7" }, // violet
 ];
 
 export const PROJECTS = [
@@ -284,4 +285,23 @@ export const PROJECTS = [
     videoSrc: "",
     description: "Customer case-study mini documentary.",
   },
+
+  // --- Personal Work ---------------------------------------------------------
+  // The "Personal Work" tab is empty until you add entries here. Copy the block
+  // below, fill it in, and set `company: "personal"`. Until then the tab shows
+  // "No videos in this category yet."
+  // {
+  //   id: "personal-1",
+  //   title: "My Personal Project",
+  //   company: "personal",
+  //   category: "Short Film",
+  //   year: "2026",
+  //   role: "Director · Editor",
+  //   tools: ["Premiere Pro", "After Effects"],
+  //   thumbnail: "",              // e.g. "/thumbnails/my-shot.jpg"
+  //   videoFile: "",             // e.g. "/videos/my-clip.mp4"
+  //   videoSrc: "",              // or a YouTube/Vimeo URL
+  //   description: "",
+  //   // vertical: true,         // uncomment for 9:16 portrait clips
+  // },
 ];

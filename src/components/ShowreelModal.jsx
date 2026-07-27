@@ -28,8 +28,8 @@ export function ShowreelProvider({ children }) {
 }
 
 // Centered, responsive video modal. ESC / close button / click-outside close it.
-// Autoplays MUTED so it starts instantly on every browser (muted autoplay is
-// always allowed) without blasting sound — the viewer unmutes via the controls.
+// Autoplays WITH sound — the modal opens from a user click (a valid autoplay
+// gesture), so browsers allow unmuted playback.
 function ShowreelModal({ onClose }) {
   const [failed, setFailed] = useState(false);
 
@@ -67,7 +67,6 @@ function ShowreelModal({ onClose }) {
                 src={SHOWREEL_SRC}
                 controls
                 autoPlay
-                muted
                 playsInline
                 controlsList="nodownload noremoteplayback"
                 onContextMenu={(e) => e.preventDefault()}

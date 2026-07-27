@@ -27,9 +27,15 @@ export default function Hero() {
               View Work
               <svg className="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
             </a>
-            <a href="#contact" className="btn btn-ghost">
-              Get in Touch
-              <svg className="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+            {/* Auto-downloads the PDF. Drop the file at
+                public/resume/Loh-Jinn-Yip-Resume.pdf (see that folder's README). */}
+            <a
+              href="/resume/Loh-Jinn-Yip-Resume.pdf"
+              className="btn btn-ghost"
+              download="Loh Jinn Yip Resume.pdf"
+            >
+              Download Resume
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 21h16" /></svg>
             </a>
           </div>
         </div>

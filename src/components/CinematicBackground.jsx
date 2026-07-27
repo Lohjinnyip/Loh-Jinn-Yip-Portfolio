@@ -67,24 +67,94 @@ function win(ctx, x, y, w, h, color) {
 }
 
 // ---- textures ---------------------------------------------------------------
+// Milky Way galaxy sky: deep-indigo gradient with a magenta horizon glow, a
+// diagonal nebula band (additive blue/white/pink light + darker dust lanes) and
+// a dense, color-varied star field that thickens along the band. Rendered at
+// high res with LINEAR filtering (not the pixel NearestFilter) so the nebula
+// reads smooth rather than blocky.
 function makeSky() {
-  const [c, ctx] = makeCanvas(128, 256);
-  const g = ctx.createLinearGradient(0, 0, 0, 256);
-  g.addColorStop(0, SKY.top);
-  g.addColorStop(0.5, SKY.mid);
-  g.addColorStop(0.8, SKY.horizon);
-  g.addColorStop(0.9, SKY.band);
-  g.addColorStop(1, SKY.mid);
+  const W = 960, H = 520;
+  const [c, ctx] = makeCanvas(W, H);
+
+  // base night gradient → warmer magenta toward the horizon (like the reference)
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0.0, "#04021a");
+  g.addColorStop(0.34, "#0a0a38");
+  g.addColorStop(0.6, "#1a1155");
+  g.addColorStop(0.8, "#3a1a66");
+  g.addColorStop(0.92, "#7c2c72");
+  g.addColorStop(1.0, "#33184a");
   ctx.fillStyle = g;
-  ctx.fillRect(0, 0, 128, 256);
-  const rng = makeRng(9);
-  for (let i = 0; i < 150; i++) {
-    const x = Math.floor(rng() * 128), y = Math.floor(rng() * 175);
-    ctx.fillStyle = `rgba(255,255,255,${(0.3 + rng() * 0.6).toFixed(2)})`;
-    const s = rng() > 0.85 ? 2 : 1;
-    ctx.fillRect(x, y, s, s);
+  ctx.fillRect(0, 0, W, H);
+
+  const rng = makeRng(42);
+  // soft additive glow blob
+  const blob = (x, y, r, col, a) => {
+    const rg = ctx.createRadialGradient(x, y, 0, x, y, r);
+    rg.addColorStop(0, `rgba(${col},${a})`);
+    rg.addColorStop(1, `rgba(${col},0)`);
+    ctx.fillStyle = rg;
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, 7);
+    ctx.fill();
+  };
+
+  // diagonal Milky Way axis: lower-right → upper-left
+  const ax0 = 0.9 * W, ay0 = 1.02 * H, ax1 = 0.18 * W, ay1 = -0.05 * H;
+  const dx = ax1 - ax0, dy = ay1 - ay0;
+  const distToBand = (x, y) => {
+    const tt = clamp01(((x - ax0) * dx + (y - ay0) * dy) / (dx * dx + dy * dy));
+    return Math.hypot(x - (ax0 + dx * tt), y - (ay0 + dy * tt));
+  };
+
+  // magenta horizon glow low-center (peeks between the buildings)
+  ctx.globalCompositeOperation = "lighter";
+  blob(0.6 * W, 1.02 * H, 0.55 * W, "150,40,120", 0.5);
+  blob(0.72 * W, 0.98 * H, 0.32 * W, "255,90,150", 0.28);
+
+  // nebula band — overlapping glows; color drifts pink(low) → blue/white → violet(high)
+  const steps = 48;
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps;
+    const x = ax0 + dx * t + (rng() - 0.5) * 46;
+    const y = ay0 + dy * t + (rng() - 0.5) * 46;
+    const r = 95 + rng() * 130;
+    const col = t < 0.3 ? "255,110,175" : t < 0.62 ? "120,150,255" : "150,120,240";
+    blob(x, y, r, col, 0.05 + rng() * 0.055);
+    blob(x, y, r * 0.5, "150,180,255", 0.04 + rng() * 0.04); // bluer core (not gray)
   }
-  return tex(c);
+
+  // dark dust lanes break up the band
+  ctx.globalCompositeOperation = "source-over";
+  for (let i = 0; i < steps; i++) {
+    const t = i / steps;
+    const x = ax0 + dx * t + (rng() - 0.5) * 78;
+    const y = ay0 + dy * t + (rng() - 0.5) * 78;
+    blob(x, y, 32 + rng() * 55, "16,8,34", 0.09 + rng() * 0.1);
+  }
+
+  // stars: dense along the band, sparser away; varied size + tint
+  ctx.globalCompositeOperation = "lighter";
+  const starCols = ["255,255,255", "205,222,255", "255,222,235", "255,240,205"];
+  for (let i = 0; i < 2600; i++) {
+    const x = rng() * W, y = rng() * H * 0.96;
+    const near = Math.max(0, 1 - distToBand(x, y) / 270);
+    if (rng() > 0.22 + near * 0.72) continue;
+    const s = rng() < 0.9 ? 1 : rng() < 0.975 ? 2 : 3;
+    const a = Math.min(1, (0.3 + rng() * 0.6) * (0.45 + near * 0.65));
+    const col = starCols[Math.floor(rng() * starCols.length)];
+    ctx.fillStyle = `rgba(${col},${a.toFixed(2)})`;
+    ctx.fillRect(x, y, s, s);
+    if (s >= 3 && rng() < 0.7) blob(x + 0.5, y + 0.5, 3 + rng() * 3.5, col, 0.22); // subtle halo on the few biggest stars only
+  }
+  ctx.globalCompositeOperation = "source-over";
+
+  // smooth (linear) sky texture — the nebula shouldn't pixelate
+  const t = new THREE.CanvasTexture(c);
+  t.magFilter = THREE.LinearFilter;
+  t.minFilter = THREE.LinearFilter;
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
 }
 // Parametric facade — one of several window LAYOUT styles (grid / vertical
 // columns / sparse scatter / lit-floor bands) with randomised spacing, window
@@ -393,7 +463,8 @@ function Exterior({ count, scroll, reduced }) {
     <group>
       <mesh position={[0, 34, -180]}>
         <planeGeometry args={[480, 260]} />
-        <meshBasicMaterial map={a.sky} toneMapped={false} depthWrite={false} />
+        {/* fog={false} so the galaxy keeps its colour at the far plane (like the moon) */}
+        <meshBasicMaterial map={a.sky} toneMapped={false} fog={false} depthWrite={false} />
       </mesh>
       <points ref={starsRef} geometry={stars} renderOrder={1}>
         <pointsMaterial size={3.4} sizeAttenuation={false} color="#ffffff" transparent opacity={0.95} depthWrite={false} />
