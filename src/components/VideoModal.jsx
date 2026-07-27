@@ -283,9 +283,6 @@ export default function VideoModal({
             <div><dt>Year</dt><dd>{project.year}</dd></div>
             <div><dt>Type of work</dt><dd>{project.category}</dd></div>
             <div><dt>My role</dt><dd>{project.role || "Video Editor"}</dd></div>
-            {project.tools?.length > 0 && (
-              <div><dt>Tools used</dt><dd>{project.tools.join(" · ")}</dd></div>
-            )}
           </dl>
           {project.description && <p>{project.description}</p>}
         </div>

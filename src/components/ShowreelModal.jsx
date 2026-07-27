@@ -10,6 +10,8 @@ import { createPortal } from "react-dom";
 // Self-hosted showreel. File lives at
 // public/videos/Loh Jinn Yip Showreal Crave Asia.mp4
 // (spaces URL-encoded so the browser can fetch it directly).
+// Self-hosted showreel. Its audio is already baked ~5 dB quieter than the raw
+// export (see scripts / git history), so it plays at a comfortable level.
 const SHOWREEL_SRC = "/videos/Loh%20Jinn%20Yip%20Showreal%20Crave%20Asia.mp4";
 
 // ---- shared opener so the Hero button AND the Work card open the same modal --

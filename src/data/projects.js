@@ -40,7 +40,7 @@ export const PROJECTS = [
     category: "Trailer",
     year: "2025",
     role: "Editor · Colorist",
-    tools: ["Premiere Pro", "DaVinci Resolve", "After Effects"],
+    tools: ["Premiere Pro", "After Effects"],
     thumbnail: "",
     // Self-hosted 1920x1080 (16:9) file — plays directly, no YouTube.
     videoFile: "/videos/Melaka_RiverofTime_Video%20(1).mp4",
