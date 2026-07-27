@@ -7,7 +7,7 @@ const SKILLS = [
   "Sound Design",
   "Storyboarding",
   "Short-form / Social",
-  "Interactive Media / UI",
+  "Front-End AI Developer",
 ];
 
 const STATS = [
@@ -43,22 +43,22 @@ export default function About() {
                 Behind the Cut
               </h2>
               <p className="about-roles">
-                Video Editor · Content Creator · AI Visual Creator · Interactive
-                Media / UI Experience
+                Video Editor · Content Creator · AI Visual Creator · Front-End AI
+                Developer
               </p>
               <p>
                 I'm Loh Jinn Yip — a <strong>Video Editor</strong>,{" "}
-                <strong>Content Creator</strong>,{" "}
-                <strong>AI Visual Creator</strong>, and{" "}
-                <strong>Interactive Media / UI Experience</strong> contributor. I
-                create social media content and ads that hold attention —
-                including AI video and AI photo.
+                <strong>Content Creator</strong>, and{" "}
+                <strong>AI Visual Creator</strong>. I specialise in commercial
+                videos, product showcases, and social ads that hold attention —
+                including AI-generated video and photo.
               </p>
               <p>
-                Across three companies I've owned edits end to end — from
-                storyboarding and rough cuts to color, motion and final delivery
-                — and I bring that same craft to interactive, web-based
-                experiences. This site is where that work lives.
+                Across three companies I've owned production end to end — from
+                storyboarding to editing, motion, color and final delivery. I
+                also build <strong>interactive, web-based experiences</strong>,
+                using AI tools like Claude to prototype sites and interfaces
+                fast. This site is one of them.
               </p>
               <div className="skills">
                 {SKILLS.map((s) => (

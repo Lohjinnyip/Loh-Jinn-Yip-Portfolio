@@ -7,16 +7,16 @@ export default function Hero() {
       <div className="container hero-inner">
         <div className="plate reveal">
           <span className="badge">
-            <span className="badge-dot" /> Available for freelance · Kuala Lumpur
+            <span className="badge-dot" /> Available for hire · Kuala Lumpur
           </span>
-          <p className="eyebrow">Video Editor · Content Creator</p>
+          <p className="eyebrow">Video Editor • Content Creator • Front-End AI Developer</p>
           <h1>
             Stories told <br />
             after <span className="gradient-text">dark.</span>
           </h1>
           <p className="tagline">
-            I edit video and craft content for brands. A collection of work from
-            the three companies I've created for — trailers, ads, motion and more.
+            Commercial videos, product storytelling, interactive media, and
+            AI-powered visuals.
           </p>
           <div className="hero-cta">
             <button type="button" className="btn btn-primary" onClick={openShowreel}>

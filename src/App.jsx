@@ -1,4 +1,5 @@
 import CinematicBackground from "./components/CinematicBackground";
+import CursorSpotlight from "./components/CursorSpotlight";
 import Loader from "./components/Loader";
 import ScrollBar from "./components/ScrollBar";
 import Navbar from "./components/Navbar";
@@ -18,6 +19,7 @@ function App() {
     <ShowreelProvider>
       <Loader />
       <CinematicBackground />
+      <CursorSpotlight />
       <ScrollBar />
       <Navbar />
       {/* Feathered scroll edge — softens content as it slides under the nav */}
