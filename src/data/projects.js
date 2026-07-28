@@ -370,21 +370,18 @@ export const PROJECTS = [
   },
 
   // --- Personal Work ---------------------------------------------------------
-  // The "Personal Work" tab is empty until you add entries here. Copy the block
-  // below, fill it in, and set `company: "personal"`. Until then the tab shows
-  // "No videos in this category yet."
-  // {
-  //   id: "personal-1",
-  //   title: "My Personal Project",
-  //   company: "personal",
-  //   category: "Short Film",
-  //   year: "2026",
-  //   role: "Director · Editor",
-  //   tools: ["Premiere Pro", "After Effects"],
-  //   thumbnail: "",              // e.g. "/thumbnails/my-shot.jpg"
-  //   videoFile: "",             // e.g. "/videos/my-clip.mp4"
-  //   videoSrc: "",              // or a YouTube/Vimeo URL
-  //   description: "",
-  //   // vertical: true,         // uncomment for 9:16 portrait clips
-  // },
+  {
+    id: "personal-main-menu",
+    title: "Main Menu",
+    company: "personal",
+    category: "Motion",
+    year: "2026",
+    role: "Director · Editor",
+    tools: ["Premiere Pro", "After Effects"],
+    thumbnail: "",
+    vertical: true, // 720x1280 (9:16)
+    videoFile: "/videos/cool.mp4",
+    videoSrc: "",
+    description: "",
+  },
 ];
