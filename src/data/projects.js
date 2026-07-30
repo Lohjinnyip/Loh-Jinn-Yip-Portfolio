@@ -63,6 +63,34 @@ export const PROJECTS = [
     description: "Gym / membership app promo.",
   },
   {
+    id: "ca-qiby",
+    title: "QIBY Intro",
+    company: "company-a",
+    category: "Intro",
+    year: "2026",
+    role: "Motion Designer",
+    tools: ["After Effects"],
+    thumbnail: "",
+    // 1920x1080 (16:9) landscape
+    videoFile: "/videos/QIBY%20Intro.mp4",
+    videoSrc: "",
+    description: "Brand intro animation.",
+  },
+  {
+    id: "ca-aig",
+    title: "AIG Intro",
+    company: "company-a",
+    category: "Intro",
+    year: "2026",
+    role: "Motion Designer",
+    tools: ["After Effects"],
+    thumbnail: "",
+    // 1920x1080 (16:9) landscape
+    videoFile: "/videos/AIG%20Intro.mp4",
+    videoSrc: "",
+    description: "Brand intro animation.",
+  },
+  {
     id: "ca-dualscreen",
     title: "Dual Screen POS",
     company: "company-a",
@@ -89,20 +117,6 @@ export const PROJECTS = [
     videoFile: "/videos/20260511-VIDEO%20PROMOTION%20FLASH-v1.mp4",
     videoSrc: "",
     description: "Fast-cut promotional flash spot.",
-  },
-  {
-    id: "ca-aig",
-    title: "AIG Intro",
-    company: "company-a",
-    category: "Intro",
-    year: "2026",
-    role: "Motion Designer",
-    tools: ["After Effects"],
-    thumbnail: "",
-    // 1920x1080 (16:9) landscape
-    videoFile: "/videos/AIG%20Intro.mp4",
-    videoSrc: "",
-    description: "Brand intro animation.",
   },
   {
     id: "ca-studio-intro",
@@ -159,20 +173,6 @@ export const PROJECTS = [
     videoFile: "/videos/Qr-v2.mp4",
     videoSrc: "",
     description: "QR code feature highlight.",
-  },
-  {
-    id: "ca-qiby",
-    title: "QIBY Intro",
-    company: "company-a",
-    category: "Intro",
-    year: "2026",
-    role: "Motion Designer",
-    tools: ["After Effects"],
-    thumbnail: "",
-    // 1920x1080 (16:9) landscape
-    videoFile: "/videos/QIBY%20Intro.mp4",
-    videoSrc: "",
-    description: "Brand intro animation.",
   },
   // --- Shipped Beyond — product videos (all 1080x1920 / 9:16 → vertical: true).
   //     Grouped by the product shown; where two clips feature the same product
