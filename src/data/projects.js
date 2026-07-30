@@ -160,6 +160,20 @@ export const PROJECTS = [
     videoSrc: "",
     description: "QR code feature highlight.",
   },
+  {
+    id: "ca-qiby",
+    title: "QIBY Intro",
+    company: "company-a",
+    category: "Intro",
+    year: "2026",
+    role: "Motion Designer",
+    tools: ["After Effects"],
+    thumbnail: "",
+    // 1920x1080 (16:9) landscape
+    videoFile: "/videos/QIBY%20Intro.mp4",
+    videoSrc: "",
+    description: "Brand intro animation.",
+  },
   // --- Shipped Beyond — product videos (all 1080x1920 / 9:16 → vertical: true).
   //     Grouped by the product shown; where two clips feature the same product
   //     they're numbered (e.g. "Blender 1" / "Blender 2"). thumbnail:"" so each
