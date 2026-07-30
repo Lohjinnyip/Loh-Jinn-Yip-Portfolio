@@ -91,6 +91,20 @@ export const PROJECTS = [
     description: "Short brand intro for Studio by Qbot.",
   },
   {
+    id: "ca-qios",
+    title: "QIOS",
+    company: "company-a",
+    category: "Product",
+    year: "2026",
+    role: "Video Editor",
+    tools: ["Premiere Pro", "After Effects"],
+    thumbnail: "",
+    // 1920x1080 (16:9) landscape
+    videoFile: "/videos/QIOS.mp4",
+    videoSrc: "",
+    description: "QIOS product piece.",
+  },
+  {
     id: "ca-studio-app",
     title: "Studio Membership App",
     company: "company-a",
