@@ -92,7 +92,7 @@ export const PROJECTS = [
   },
   {
     id: "ca-qios",
-    title: "QIOS",
+    title: "QPOS",
     company: "company-a",
     category: "Product",
     year: "2026",
