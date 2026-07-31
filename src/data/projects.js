@@ -608,4 +608,18 @@ export const PROJECTS = [
     videoSrc: "",
     description: "",
   },
+  {
+    id: "personal-want-u",
+    title: "want u",
+    company: "personal",
+    category: "Motion",
+    year: "2026",
+    role: "Director · Editor",
+    tools: ["Premiere Pro", "After Effects"],
+    thumbnail: "",
+    // 960x720 (4:3) landscape
+    videoFile: "/videos/want%20u.mp4",
+    videoSrc: "",
+    description: "",
+  },
 ];

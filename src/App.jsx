@@ -16,21 +16,24 @@ import { useReveal } from "./hooks/useScrollSpy";
 function App() {
   useReveal();
 
-  // Defer the heavy Three.js scene until after the splash has painted a few
-  // frames. Its synchronous WebGL / texture build would otherwise jank the
-  // loader animation on the first frames (visible flicker on entry). It mounts
-  // behind the opaque loader, so the short delay is never seen.
+  // Don't mount the heavy Three.js scene while the splash is animating — its
+  // one-time WebGL context + texture build competes with the loader for the
+  // main thread AND the GPU/compositor, which is what caused the jitter. We
+  // wait until the loader begins leaving (its animated phase is done), then
+  // build the scene; it fades in behind the loader as the loader fades out.
   const [showBg, setShowBg] = useState(false);
+
+  // Safety net: if `window.load` never fires (so the loader never signals),
+  // still bring the background up after a moment.
   useEffect(() => {
-    const id = requestAnimationFrame(() =>
-      requestAnimationFrame(() => setShowBg(true))
-    );
-    return () => cancelAnimationFrame(id);
-  }, []);
+    if (showBg) return;
+    const t = setTimeout(() => setShowBg(true), 4000);
+    return () => clearTimeout(t);
+  }, [showBg]);
 
   return (
     <ShowreelProvider>
-      <Loader />
+      <Loader onBeginLeave={() => setShowBg(true)} />
       {showBg && <CinematicBackground />}
       <CursorSpotlight />
       <ScrollBar />

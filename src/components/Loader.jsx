@@ -5,7 +5,7 @@ const MIN_MS = 1100;
 // Must match the CSS fade-out transition on `.loader`.
 const FADE_MS = 600;
 
-export default function Loader() {
+export default function Loader({ onBeginLeave }) {
   const [leaving, setLeaving] = useState(false); // fade-out started
   const [gone, setGone] = useState(false); // fully removed from the DOM
 
@@ -22,6 +22,10 @@ export default function Loader() {
       fadeTimer = setTimeout(() => {
         setLeaving(true);
         document.body.style.overflow = ""; // let the user scroll as it fades
+        // Tell the app it's now safe to build the heavy 3D scene: the splash's
+        // animated phase is over, so the WebGL/GPU work won't jitter it. The
+        // scene fades in behind the loader as it fades out.
+        onBeginLeave?.();
         removeTimer = setTimeout(() => setGone(true), FADE_MS);
       }, wait);
     };
@@ -36,7 +40,7 @@ export default function Loader() {
       window.removeEventListener("load", finish);
       document.body.style.overflow = "";
     };
-  }, []);
+  }, [onBeginLeave]);
 
   if (gone) return null;
 

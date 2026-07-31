@@ -278,6 +278,13 @@ img, video { display: block; max-width: 100%; }
   z-index: -2;
   overflow: hidden;
   background: var(--bg-0);
+  /* The scene is only mounted once the splash starts leaving, so this one-shot
+     fade plays as it appears behind the fading loader — no hard pop-in. */
+  animation: bgFadeIn 0.8s ease both;
+}
+@keyframes bgFadeIn { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .bg-scene { animation: none; }
 }
 .bg-scene.bg-image {
   background-size: cover;
