@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import CinematicBackground from "./components/CinematicBackground";
 import CursorSpotlight from "./components/CursorSpotlight";
 import Loader from "./components/Loader";
@@ -15,10 +16,22 @@ import { useReveal } from "./hooks/useScrollSpy";
 function App() {
   useReveal();
 
+  // Defer the heavy Three.js scene until after the splash has painted a few
+  // frames. Its synchronous WebGL / texture build would otherwise jank the
+  // loader animation on the first frames (visible flicker on entry). It mounts
+  // behind the opaque loader, so the short delay is never seen.
+  const [showBg, setShowBg] = useState(false);
+  useEffect(() => {
+    const id = requestAnimationFrame(() =>
+      requestAnimationFrame(() => setShowBg(true))
+    );
+    return () => cancelAnimationFrame(id);
+  }, []);
+
   return (
     <ShowreelProvider>
       <Loader />
-      <CinematicBackground />
+      {showBg && <CinematicBackground />}
       <CursorSpotlight />
       <ScrollBar />
       <Navbar />
