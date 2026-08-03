@@ -98,6 +98,10 @@ body.sb-dragging .scrollbar-thumb { width: 9px; cursor: grabbing; }
     linear-gradient(180deg, #070b1c 0%, var(--bg-0) 72%);
   opacity: 1;
   transition: opacity 0.6s ease;
+  /* Promote to its own compositor layer so the heavy Three.js scene building
+     on the main thread can't repaint / stutter the splash animations. */
+  transform: translateZ(0);
+  will-change: opacity;
 }
 .loader.leaving { opacity: 0; pointer-events: none; }
 
@@ -119,21 +123,25 @@ body.sb-dragging .scrollbar-thumb { width: 9px; cursor: grabbing; }
   background: rgba(255, 255, 255, 0.08);
 }
 .loader-bar span {
-  position: absolute; top: 0; left: -40%; height: 100%; width: 40%;
+  position: absolute; top: 0; left: 0; height: 100%; width: 40%;
   border-radius: 999px; background: var(--btn-grad);
   box-shadow: 0 0 12px -1px var(--cyan);
+  /* Animate transform (compositor-only) instead of `left` (main-thread layout),
+     so the bar keeps sliding smoothly while the 3D scene builds. */
+  transform: translateX(-100%);
+  will-change: transform;
   animation: loaderSlide 1.1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 .loader-sub {
   font-size: 0.76rem; letter-spacing: 0.22em; text-transform: uppercase;
   color: var(--text-muted);
 }
-@keyframes loaderSlide { from { left: -40%; } to { left: 100%; } }
+@keyframes loaderSlide { from { transform: translateX(-100%); } to { transform: translateX(250%); } }
 @keyframes loaderPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
 
 @media (prefers-reduced-motion: reduce) {
   .loader-brand, .loader-bar span { animation: none; }
-  .loader-bar span { left: 0; width: 100%; }
+  .loader-bar span { left: 0; width: 100%; transform: none; }
 }
 
 h1, h2, h3, .display {
@@ -270,6 +278,13 @@ img, video { display: block; max-width: 100%; }
   z-index: -2;
   overflow: hidden;
   background: var(--bg-0);
+  /* The scene is only mounted once the splash starts leaving, so this one-shot
+     fade plays as it appears behind the fading loader — no hard pop-in. */
+  animation: bgFadeIn 0.8s ease both;
+}
+@keyframes bgFadeIn { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .bg-scene { animation: none; }
 }
 .bg-scene.bg-image {
   background-size: cover;
