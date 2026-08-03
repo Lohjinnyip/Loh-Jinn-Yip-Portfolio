@@ -617,7 +617,7 @@ export const PROJECTS = [
     role: "Director · Editor",
     tools: ["Premiere Pro", "After Effects"],
     thumbnail: "",
-    // 960x720 (4:3) landscape
+    // 640x480 (4:3) landscape
     videoFile: "/videos/want%20u.mp4",
     videoSrc: "",
     description: "",
