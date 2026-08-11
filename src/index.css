@@ -144,6 +144,13 @@ body.sb-dragging .scrollbar-thumb { width: 9px; cursor: grabbing; }
   .loader-bar span { left: 0; width: 100%; transform: none; }
 }
 
+/* Stop the browser's native "ghost image" drag on media (you could otherwise
+   click-hold a thumbnail and fling a copy of it around the page). */
+img, video {
+  -webkit-user-drag: none;
+  user-select: none;
+}
+
 h1, h2, h3, .display {
   font-family: "Space Grotesk", "Inter", sans-serif;
   letter-spacing: -0.01em;

@@ -109,6 +109,7 @@ export default function Gallery() {
                   src={asset(img.src)}
                   alt={img.alt || ""}
                   loading="lazy"
+                  draggable={false}
                   onError={(e) => {
                     // Self-heal a stale cached 404 (e.g. from before the asset
                     // paths were base-prefixed): refetch once, bypassing cache.
