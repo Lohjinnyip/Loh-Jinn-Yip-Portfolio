@@ -3,6 +3,7 @@ import { COMPANIES, PROJECTS } from "../data/projects";
 import VideoCard from "./VideoCard";
 import VideoModal from "./VideoModal";
 import { useShowreel } from "./ShowreelModal";
+import { asset } from "../utils/asset";
 
 // Duration of the card swap animation — MUST match the CSS transition on `.grid`.
 const ANIM_MS = 200;
@@ -103,7 +104,7 @@ export default function Work() {
               aria-label="Play 2026 Creative Showreel"
             >
               <div className="card-thumb">
-                <img src="/thumbnails/showreel-cover.jpg" alt="" loading="lazy" />
+                <img src={asset("/thumbnails/showreel-cover.jpg")} alt="" loading="lazy" />
               </div>
               <span className="play-btn">
                 <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>

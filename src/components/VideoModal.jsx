@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { youTubeId, loadYouTubeApi } from "../utils/youtube";
+import { asset } from "../utils/asset";
 
 // Turn a Vimeo URL into an embeddable URL. Returns null otherwise.
 function vimeoEmbed(url) {
@@ -231,11 +232,11 @@ export default function VideoModal({
         <div className={`modal-video${isPortrait ? " portrait" : ""}`}>
           {useLocal ? (
             <video
-              src={localFile}
+              src={asset(localFile)}
               controls
               autoPlay
               playsInline
-              poster={project.thumbnail || undefined}
+              poster={project.thumbnail ? asset(project.thumbnail) : undefined}
               // hide the "⋮" menu (Download / Playback speed / PiP) so the file
               // can't be grabbed from the player; also block right-click save.
               controlsList="nodownload noplaybackrate noremoteplayback"

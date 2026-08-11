@@ -1,4 +1,5 @@
 import { useShowreel } from "./ShowreelModal";
+import { asset } from "../utils/asset";
 
 export default function Hero() {
   const openShowreel = useShowreel();
@@ -30,7 +31,7 @@ export default function Hero() {
             {/* Auto-downloads the PDF. Drop the file at
                 public/resume/Loh-Jinn-Yip-Resume.pdf (see that folder's README). */}
             <a
-              href="/resume/Loh-Jinn-Yip-Resume.pdf"
+              href={asset("/resume/Loh-Jinn-Yip-Resume.pdf")}
               className="btn btn-ghost"
               download="Loh Jinn Yip Resume.pdf"
             >
@@ -52,7 +53,7 @@ export default function Hero() {
               <span>Add your photo<br /><code>public/profile.jpg</code></span>
             </div>
             <img
-              src="/profile.jpg"
+              src={asset("/profile.jpg")}
               alt="Loh Jinn Yip"
               onError={(e) => { e.currentTarget.style.display = "none"; }}
             />

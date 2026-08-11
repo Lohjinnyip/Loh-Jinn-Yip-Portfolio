@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { GALLERY } from "../data/gallery";
+import { asset } from "../utils/asset";
 
 // how many tiles to show before the "show more" arrow appears
 const INITIAL = 6;
@@ -105,7 +106,7 @@ export default function Gallery() {
                 aria-label={`View ${img.alt || "image"}`}
               >
                 <img
-                  src={img.src}
+                  src={asset(img.src)}
                   alt={img.alt || ""}
                   loading="lazy"
                   style={img.position ? { objectPosition: img.position } : undefined}
@@ -152,7 +153,7 @@ export default function Gallery() {
             {/* click to zoom in / out; when zoomed, click-hold-drag to pan up/down */}
             <img
               ref={imgRef}
-              src={openImage.src}
+              src={asset(openImage.src)}
               alt={openImage.alt || ""}
               draggable={false}
               className={`lightbox-img${zoomed ? " zoomed" : ""}${dragging ? " dragging" : ""}`}

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import CardPreview from "./CardPreview";
+import { asset } from "../utils/asset";
 
 const PLACEHOLDER_GRADIENTS = {
   "company-a": "linear-gradient(140deg, #0e2a3a, #113b52 55%, #0a1a2e)",
@@ -23,7 +24,7 @@ export default function VideoCard({
   // No image set but we have a self-hosted file? Show its first frame as the thumb.
   const firstFrame = !hasThumb && project.videoFile;
   const thumbStyle = hasThumb
-    ? { backgroundImage: `url(${project.thumbnail})` }
+    ? { backgroundImage: `url(${asset(project.thumbnail)})` }
     : { background: PLACEHOLDER_GRADIENTS[project.company] || PLACEHOLDER_GRADIENTS["company-a"] };
 
   // Only the auto-preview card watches whether it is scrolled into view.
@@ -55,7 +56,7 @@ export default function VideoCard({
         // the whole clip. muted + preload=metadata = cheap.
         <video
           className="card-thumb card-thumb--video"
-          src={`${project.videoFile}#t=0.1`}
+          src={`${asset(project.videoFile)}#t=0.1`}
           muted
           playsInline
           preload="metadata"

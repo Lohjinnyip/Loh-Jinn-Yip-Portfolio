@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { youTubeId, loadYouTubeApi } from "../utils/youtube";
+import { asset } from "../utils/asset";
 
 const FILE_RE = /\.(mp4|webm|mov|m4v|ogg)$/i;
 
@@ -96,11 +97,11 @@ export default function CardPreview({ project, active, timeRef }) {
       <video
         ref={videoRef}
         className="card-thumb card-thumb--video card-preview"
-        src={localFile}
+        src={asset(localFile)}
         muted
         playsInline
         preload="auto"
-        poster={project.thumbnail || undefined}
+        poster={project.thumbnail ? asset(project.thumbnail) : undefined}
         onError={() => setFileFailed(true)}
         tabIndex={-1}
       />

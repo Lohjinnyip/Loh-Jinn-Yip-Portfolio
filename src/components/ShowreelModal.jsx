@@ -6,6 +6,7 @@ import {
   useState,
 } from "react";
 import { createPortal } from "react-dom";
+import { asset } from "../utils/asset";
 
 // Self-hosted showreel. File lives at
 // public/videos/Loh Jinn Yip Showreal Crave Asia.mp4
@@ -66,7 +67,7 @@ function ShowreelModal({ onClose }) {
               </div>
             ) : (
               <video
-                src={SHOWREEL_SRC}
+                src={asset(SHOWREEL_SRC)}
                 controls
                 autoPlay
                 playsInline
