@@ -109,6 +109,15 @@ export default function Gallery() {
                   src={asset(img.src)}
                   alt={img.alt || ""}
                   loading="lazy"
+                  onError={(e) => {
+                    // Self-heal a stale cached 404 (e.g. from before the asset
+                    // paths were base-prefixed): refetch once, bypassing cache.
+                    const el = e.currentTarget;
+                    if (el.dataset.retried) return;
+                    el.dataset.retried = "1";
+                    const u = asset(img.src);
+                    el.src = u + (u.includes("?") ? "&" : "?") + "r=1";
+                  }}
                   style={img.position ? { objectPosition: img.position } : undefined}
                 />
                 {img.alt && <span className="gallery-caption">{img.alt}</span>}
