@@ -29,7 +29,6 @@ export const COMPANIES = [
   { id: "company-a", name: "Crave Asia", accent: "#38bdf8" }, // sky blue
   { id: "company-b", name: "Shipped Beyond", accent: "#3b82f6" }, // blue
   { id: "company-c", name: "Adora Clinic", accent: "#60a5fa" }, // light blue
-  { id: "personal", name: "Personal Work", accent: "#a855f7" }, // violet
 ];
 
 export const PROJECTS = [
@@ -603,36 +602,6 @@ export const PROJECTS = [
     thumbnail: "",
     vertical: true,
     videoFile: "/videos/adora-ultraformer-mpt-explanation.mp4",
-    videoSrc: "",
-    description: "",
-  },
-
-  // --- Personal Work ---------------------------------------------------------
-  {
-    id: "personal-main-menu",
-    title: "Main Menu",
-    company: "personal",
-    category: "Motion",
-    year: "2026",
-    role: "Director · Editor",
-    tools: ["Premiere Pro", "After Effects"],
-    thumbnail: "",
-    vertical: true, // 720x1280 (9:16)
-    videoFile: "/videos/cool.mp4",
-    videoSrc: "",
-    description: "",
-  },
-  {
-    id: "personal-want-u",
-    title: "want u",
-    company: "personal",
-    category: "Motion",
-    year: "2026",
-    role: "Director · Editor",
-    tools: ["Premiere Pro", "After Effects"],
-    thumbnail: "",
-    // 640x480 (4:3) landscape
-    videoFile: "/videos/want%20u.mp4",
     videoSrc: "",
     description: "",
   },

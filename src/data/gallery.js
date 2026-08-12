@@ -57,12 +57,4 @@ export const GALLERY = [
   { id: "ad10", src: "/gallery/adora-sunscreen.webp", alt: "Adora - Sunscreen", position: "center" },
   { id: "ad11", src: "/gallery/adora-teonaxe.webp", alt: "Adora - Teonaxe", position: "center" },
   { id: "ad12", src: "/gallery/adora-tranx.webp", alt: "Adora - Tranx", position: "center" },
-  // Personal — "on the road" set
-  { id: "g15", src: "/gallery/personal-on-the-road-1.webp", alt: "Personal - on the road" },
-  { id: "g16", src: "/gallery/personal-on-the-road-2.webp", alt: "Personal - on the road" },
-  { id: "g17", src: "/gallery/personal-on-the-road-3.webp", alt: "Personal - on the road" },
-  { id: "g18", src: "/gallery/personal-on-the-road-4.webp", alt: "Personal - on the road" },
-  // subject (cup) sits low → center-crop so it isn't cut off at the bottom edge
-  { id: "g19", src: "/gallery/personal-on-the-road-5.webp", alt: "Personal - on the road", position: "center" },
-  { id: "g20", src: "/gallery/personal-on-the-road-6.webp", alt: "Personal - on the road" },
 ];
