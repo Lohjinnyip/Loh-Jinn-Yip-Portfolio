@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { useScroll, useSpring, useMotionValueEvent } from "framer-motion";
 import * as THREE from "three";
 
 // ============================================================================
@@ -849,33 +850,43 @@ export default function CinematicBackground({ onReady }) {
   const debugOn = typeof window !== "undefined" && (window.location.search.includes("debug") || window.location.hash.includes("debug"));
   const count = isMobile ? 14 : 34;
 
+  // ---- Framer Motion drives the scene from scroll ----
+  // useScroll gives raw page progress (0→1); useSpring turns it into a smooth,
+  // cinematically-damped value. Every change feeds the camera rig's scroll ref
+  // and the CSS parallax vars, then wakes the on-demand render loop. This is the
+  // "mix" — Framer's spring is the scroll source the Three.js camera follows.
+  const { scrollYProgress } = useScroll();
+  const smoothScroll = useSpring(scrollYProgress, {
+    stiffness: 110,
+    damping: 28,
+    restDelta: 0.0005,
+  });
+
+  const applyScroll = (raw) => {
+    const p = clamp01(raw);
+    scroll.current = p;
+    const doc = document.documentElement;
+    doc.style.setProperty("--p", p.toFixed(4));
+    const a = planRef.current ? planRef.current.anchor : 0.22;
+    const pass = Math.min(smooth(a - 0.11, a - 0.06, p), 1 - smooth(a - 0.04, a + 0.01, p));
+    doc.style.setProperty("--pass", pass.toFixed(3));
+    scroll.invalidate && scroll.invalidate();
+  };
+  useMotionValueEvent(smoothScroll, "change", applyScroll);
+
   useEffect(() => {
-    let raf = 0;
-    const onScroll = () => {
-      cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(() => {
-        const doc = document.documentElement;
-        const max = doc.scrollHeight - window.innerHeight;
-        const p = max > 0 ? clamp01(window.scrollY / max) : 0;
-        scroll.current = p;
-        doc.style.setProperty("--p", p.toFixed(4));
-        const a = planRef.current ? planRef.current.anchor : 0.22;
-        const pass = Math.min(smooth(a - 0.11, a - 0.06, p), 1 - smooth(a - 0.04, a + 0.01, p));
-        doc.style.setProperty("--pass", pass.toFixed(3));
-        scroll.invalidate && scroll.invalidate();
-      });
-    };
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll);
+    // sync once on mount (covers a mid-page refresh) + keep it right on resize;
+    // re-wake the demand loop when returning to a backgrounded tab.
+    applyScroll(scrollYProgress.get());
+    const onResize = () => applyScroll(scrollYProgress.get());
     const onVis = () => scroll.invalidate && scroll.invalidate();
+    window.addEventListener("resize", onResize);
     document.addEventListener("visibilitychange", onVis);
     return () => {
-      cancelAnimationFrame(raf);
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
+      window.removeEventListener("resize", onResize);
       document.removeEventListener("visibilitychange", onVis);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
