@@ -1269,11 +1269,15 @@ body.modal-open .top-feather {
   max-width: 100%;
   padding: 22px 28px;
   border-radius: var(--radius-lg);
-  /* iOS "liquid glass": faint dark base for text contrast + a diagonal white
-     sheen, floated on a heavy blur + saturation so the background bends through */
+  /* iOS "liquid glass": dark base for text contrast + a diagonal white sheen,
+     floated on a heavy blur + saturation so the background bends through.
+     The dark base carries enough opacity to stay readable on its own, because
+     backdrop-filter blur silently fails on some browsers/GPUs when the layer
+     behind is the animated 3D canvas — there the blur just doesn't paint and a
+     thin base would leave the sharp city bleeding through the text. */
   background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.04) 42%, rgba(255, 255, 255, 0) 100%),
-    rgba(10, 16, 34, 0.26);
+    linear-gradient(135deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.035) 42%, rgba(255, 255, 255, 0) 100%),
+    rgba(10, 16, 34, 0.62);
   backdrop-filter: blur(22px) saturate(165%);
   -webkit-backdrop-filter: blur(22px) saturate(165%);
   border: 1px solid rgba(255, 255, 255, 0.18);
@@ -1299,6 +1303,11 @@ body.modal-open .top-feather {
   width: auto;
   padding: 38px clamp(24px, 4vw, 46px);
   border-radius: 28px;
+  /* Section panels sit over the brighter warm studio scene, so carry a touch
+     more opacity than the hero plate to stay readable when blur doesn't paint. */
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.035) 42%, rgba(255, 255, 255, 0) 100%),
+    rgba(10, 16, 34, 0.72);
 }
 
 /* ---------- BRAND LOGO MARQUEE ----------
