@@ -1037,29 +1037,17 @@ body.modal-open .top-feather {
   box-shadow: 0 30px 80px rgba(0,0,0,0.6);
 }
 /* video keeps its size; only the caption below it scrolls */
-.modal-video { width: 100%; aspect-ratio: 16 / 9; background: #000; flex: 0 0 auto; }
-.modal-video iframe, .modal-video video { width: 100%; height: 100%; border: 0; }
+.modal-video { position: relative; width: 100%; aspect-ratio: 16 / 9; background: #000; flex: 0 0 auto; }
+/* Absolutely-fill the ratio box so a portrait clip's intrinsic size can't push
+   the container taller and defeat the 16:9 aspect-ratio — it just pillarboxes. */
+.modal-video iframe, .modal-video video { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
 /* contain = never distort a clip whose aspect doesn't match the frame */
 .modal-video video { object-fit: contain; }
-.modal-video .yt-holder, .modal-video .yt-holder > div { width: 100%; height: 100%; }
+.modal-video .yt-holder, .modal-video .yt-holder > div { position: absolute; inset: 0; width: 100%; height: 100%; }
 
-/* ---- PORTRAIT / 9:16 videos (Reels, TikTok, Shorts) ----
-   Width-driven: the modal width sets the frame, and the video height follows the
-   9:16 ratio. The width is capped by BOTH the screen width (92vw) and height
-   (40vh → video height = width × 16/9 ≈ 71vh, stays inside the viewport), so the
-   tall frame is fully responsive and never rides under the navbar. The
-   max-height guard adds a scroll fallback on very short screens. */
-.modal--portrait {
-  /* width drives the 9:16 height; the dvh cap keeps the tall frame + caption
-     inside the viewport on any screen (video height ≈ width × 16/9 ≈ 71dvh) */
-  width: min(360px, 92vw, 40dvh);
-}
-.modal--portrait .modal-body { text-align: center; } /* centre the video's caption */
-.modal-video.portrait {
-  width: 100%;
-  height: auto;
-  aspect-ratio: 9 / 16;
-}
+/* Portrait (9:16) clips share the landscape frame: the 16:9 `.modal-video` box
+   above (object-fit: contain) pillarboxes the vertical video with black bars on
+   the sides, and the details below get the full modal width to stay readable. */
 .modal-novideo { width: 100%; aspect-ratio: 16 / 9; display: flex; align-items: center; justify-content: center; color: var(--text-muted); text-align: center; padding: 20px; background: linear-gradient(140deg, var(--bg-2), var(--bg-0)); }
 /* scrolls on its own when the description is long; the video above stays put */
 .modal-body { padding: 20px 24px 24px; overflow-y: auto; }

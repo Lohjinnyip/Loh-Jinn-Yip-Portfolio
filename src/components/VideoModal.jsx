@@ -183,17 +183,15 @@ export default function VideoModal({
   const ytId = useLocal ? null : youTubeId(project.videoSrc);
   const vimeo = useLocal || ytId ? null : vimeoEmbed(project.videoSrc);
 
-  // Portrait (9:16) clips open in a tall frame instead of the landscape box.
-  const isPortrait = Boolean(project.vertical);
-
   // Portal to <body> so the overlay escapes the Work section's stacking context
   // (otherwise later sections like Gallery/About paint over it once scrolled).
   return createPortal(
     <div className="modal-backdrop" onClick={onClose}>
       {/* The stage shrink-wraps the modal so the arrows anchor to the video
-          frame's edges — they snap tighter for a portrait clip, wider for a
-          landscape one. Prev starts hidden on the first video and fades in once
-          you move off it (same for next on the last). */}
+          frame's edges. Every clip — portrait or landscape — uses the same wide
+          16:9 frame (vertical videos sit pillarboxed inside it) so the details
+          below always have the full width to read comfortably. Prev starts
+          hidden on the first video and fades in once you move off it. */}
       <div className="modal-stage">
       <button
         className={`modal-nav prev${hasPrev ? "" : " hidden"}`}
@@ -221,7 +219,7 @@ export default function VideoModal({
       </button>
 
       <div
-        className={`modal${isPortrait ? " modal--portrait" : ""}${slide ? ` slide-${slide}` : ""}`}
+        className={`modal${slide ? ` slide-${slide}` : ""}`}
         onClick={(e) => e.stopPropagation()}
         onAnimationEnd={onAnimEnd}
       >
@@ -229,7 +227,7 @@ export default function VideoModal({
           ✕
         </button>
 
-        <div className={`modal-video${isPortrait ? " portrait" : ""}`}>
+        <div className="modal-video">
           {useLocal ? (
             <video
               src={asset(localFile)}
