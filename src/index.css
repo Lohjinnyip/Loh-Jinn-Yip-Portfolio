@@ -207,7 +207,9 @@ img, video { display: block; max-width: 100%; }
   justify-content: space-between;
   padding: 9px 9px 9px 22px;
   border-radius: var(--radius-pill);
-  background: rgba(10, 14, 28, 0.5);
+  /* Opaque enough that the moon / bright scene behind can't bleed through and
+     wash out the nav links (backdrop-blur doesn't paint over the canvas live). */
+  background: rgba(10, 14, 28, 0.78);
   border: 1px solid var(--glass-border);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
@@ -215,7 +217,7 @@ img, video { display: block; max-width: 100%; }
   transition: background 0.3s ease;
 }
 .nav.scrolled { padding-top: 10px; }
-.nav.scrolled .container { background: rgba(7, 10, 20, 0.75); }
+.nav.scrolled .container { background: rgba(7, 10, 20, 0.85); }
 
 .brand {
   display: inline-flex; align-items: center; gap: 9px;
