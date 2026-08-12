@@ -105,6 +105,20 @@ export const PROJECTS = [
     description: "QIOS product piece.",
   },
   {
+    id: "ca-qsentry",
+    title: "Qsentry Intro",
+    company: "company-a",
+    category: "Intro",
+    year: "2026",
+    role: "Motion Designer",
+    tools: ["After Effects"],
+    thumbnail: "",
+    // 1920x1080 (16:9) landscape
+    videoFile: "/videos/Qsentry%20Intro.mp4",
+    videoSrc: "",
+    description: "Brand intro animation.",
+  },
+  {
     id: "ca-studio-app",
     title: "Studio Membership App",
     company: "company-a",
