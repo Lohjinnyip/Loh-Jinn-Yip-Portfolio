@@ -1277,7 +1277,7 @@ body.modal-open .top-feather {
      thin base would leave the sharp city bleeding through the text. */
   background:
     linear-gradient(135deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.035) 42%, rgba(255, 255, 255, 0) 100%),
-    rgba(10, 16, 34, 0.62);
+    rgba(10, 16, 34, 0.82);
   backdrop-filter: blur(22px) saturate(165%);
   -webkit-backdrop-filter: blur(22px) saturate(165%);
   border: 1px solid rgba(255, 255, 255, 0.18);
@@ -1307,7 +1307,7 @@ body.modal-open .top-feather {
      more opacity than the hero plate to stay readable when blur doesn't paint. */
   background:
     linear-gradient(135deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.035) 42%, rgba(255, 255, 255, 0) 100%),
-    rgba(10, 16, 34, 0.72);
+    rgba(10, 16, 34, 0.86);
 }
 
 /* ---------- BRAND LOGO MARQUEE ----------
