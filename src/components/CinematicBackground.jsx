@@ -834,7 +834,7 @@ function Rig({ scroll, reduced, moonRef, warmRef, deskRef, softboxRef, planRef, 
 }
 
 // ----------------------------------------------------------------------------
-export default function CinematicBackground() {
+export default function CinematicBackground({ onReady }) {
   const scroll = useRef(0);
   const studioRef = useRef();
   const moonRef = useRef();
@@ -885,6 +885,15 @@ export default function CinematicBackground() {
         camera={{ fov: FOV_CITY, near: 0.1, far: 600, position: [0, 7, -18] }}
         dpr={isMobile ? 1 : [1, 2]}
         gl={{ antialias: !isMobile, powerPreference: "high-performance" }}
+        onCreated={() => {
+          // R3F has created the renderer and painted the initial frame. Wait two
+          // more frames (so textures/materials are actually on screen) then tell
+          // the loader the scene is ready — this is the moment the splash waits
+          // for before revealing the site.
+          requestAnimationFrame(() =>
+            requestAnimationFrame(() => onReady?.())
+          );
+        }}
       >
         <Rig
           scroll={scroll}

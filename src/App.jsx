@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import CinematicBackground from "./components/CinematicBackground";
 import CursorSpotlight from "./components/CursorSpotlight";
 import Loader from "./components/Loader";
@@ -16,25 +16,15 @@ import { useReveal } from "./hooks/useScrollSpy";
 function App() {
   useReveal();
 
-  // Don't mount the heavy Three.js scene while the splash is animating — its
-  // one-time WebGL context + texture build competes with the loader for the
-  // main thread AND the GPU/compositor, which is what caused the jitter. We
-  // wait until the loader begins leaving (its animated phase is done), then
-  // build the scene; it fades in behind the loader as the loader fades out.
-  const [showBg, setShowBg] = useState(false);
-
-  // Safety net: if `window.load` never fires (so the loader never signals),
-  // still bring the background up after a moment.
-  useEffect(() => {
-    if (showBg) return;
-    const t = setTimeout(() => setShowBg(true), 4000);
-    return () => clearTimeout(t);
-  }, [showBg]);
+  // The 3D scene builds behind the splash; the loader stays up until the scene
+  // reports it has actually rendered (sceneReady), so the site is never revealed
+  // over a half-built background. onReady fires from the Canvas's onCreated.
+  const [sceneReady, setSceneReady] = useState(false);
 
   return (
     <ShowreelProvider>
-      <Loader onBeginLeave={() => setShowBg(true)} />
-      {showBg && <CinematicBackground />}
+      <Loader sceneReady={sceneReady} />
+      <CinematicBackground onReady={() => setSceneReady(true)} />
       <CursorSpotlight />
       <ScrollBar />
       <Navbar />

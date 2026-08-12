@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { youTubeId, loadYouTubeApi } from "../utils/youtube";
-import { asset } from "../utils/asset";
+import { asset, posterFor } from "../utils/asset";
 
 const FILE_RE = /\.(mp4|webm|mov|m4v|ogg)$/i;
 
@@ -101,7 +101,7 @@ export default function CardPreview({ project, active, timeRef }) {
         muted
         playsInline
         preload="auto"
-        poster={project.thumbnail ? asset(project.thumbnail) : undefined}
+        poster={asset(project.thumbnail || posterFor(project.videoFile)) || undefined}
         onError={() => setFileFailed(true)}
         tabIndex={-1}
       />

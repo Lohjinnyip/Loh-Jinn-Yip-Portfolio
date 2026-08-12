@@ -3,7 +3,7 @@ import { COMPANIES, PROJECTS } from "../data/projects";
 import VideoCard from "./VideoCard";
 import VideoModal from "./VideoModal";
 import { useShowreel } from "./ShowreelModal";
-import { asset } from "../utils/asset";
+import { asset, posterFor } from "../utils/asset";
 
 // Duration of the card swap animation — MUST match the CSS transition on `.grid`.
 const ANIM_MS = 200;
@@ -34,6 +34,30 @@ export default function Work() {
   // switching tabs shows a different first video → forget the old preview time
   useEffect(() => {
     previewTimeRef.current = 0;
+  }, [display]);
+
+  // Prefetch the OTHER tabs' poster thumbnails while the browser is idle, one at
+  // a time so we never contend with the active tab. Result: switching companies
+  // shows thumbnails instantly instead of loading them on click. Posters are
+  // tiny (~20 KB) static images, so this is cheap even on mobile.
+  useEffect(() => {
+    const urls = PROJECTS.filter((p) => p.company !== display)
+      .map((p) => (p.thumbnail ? asset(p.thumbnail) : asset(posterFor(p.videoFile))))
+      .filter(Boolean);
+    if (!urls.length) return;
+    let idx = 0;
+    let cancelled = false;
+    const idle = window.requestIdleCallback || ((fn) => setTimeout(fn, 300));
+    const next = () => {
+      if (cancelled || idx >= urls.length) return;
+      const img = new Image();
+      img.onload = img.onerror = () => idle(next); // chain gently, cache-warm
+      img.src = urls[idx++];
+    };
+    idle(next);
+    return () => {
+      cancelled = true;
+    };
   }, [display]);
 
   function selectCompany(id) {

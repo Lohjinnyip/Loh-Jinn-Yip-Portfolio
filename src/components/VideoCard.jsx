@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import CardPreview from "./CardPreview";
-import { asset } from "../utils/asset";
+import { asset, posterFor } from "../utils/asset";
 
 const PLACEHOLDER_GRADIENTS = {
   "company-a": "linear-gradient(140deg, #0e2a3a, #113b52 55%, #0a1a2e)",
@@ -21,11 +21,14 @@ export default function VideoCard({
   const [inView, setInView] = useState(false);
 
   const hasThumb = Boolean(project.thumbnail);
-  // No image set but we have a self-hosted file? Show its first frame as the thumb.
-  const firstFrame = !hasThumb && project.videoFile;
-  const thumbStyle = hasThumb
-    ? { backgroundImage: `url(${asset(project.thumbnail)})` }
-    : { background: PLACEHOLDER_GRADIENTS[project.company] || PLACEHOLDER_GRADIENTS["company-a"] };
+  // Prefer an explicit thumbnail; otherwise use the video's pre-rendered static
+  // poster (loads instantly, no black box). Gradient sits underneath as the
+  // never-black fallback if a poster is ever missing.
+  const poster = hasThumb
+    ? asset(project.thumbnail)
+    : asset(posterFor(project.videoFile));
+  const gradient =
+    PLACEHOLDER_GRADIENTS[project.company] || PLACEHOLDER_GRADIENTS["company-a"];
 
   // Only the auto-preview card watches whether it is scrolled into view.
   useEffect(() => {
@@ -50,24 +53,23 @@ export default function VideoCard({
       onClick={() => onOpen(project)}
       aria-label={`Play ${project.title}`}
     >
-      {/* base thumbnail layer (shown until/unless a preview covers it) */}
-      {firstFrame && !autoPreview ? (
-        // `#t=0.1` seeks to (and paints) the first frame without downloading
-        // the whole clip. muted + preload=metadata = cheap.
-        <video
-          className="card-thumb card-thumb--video"
-          src={`${asset(project.videoFile)}#t=0.1`}
-          muted
-          playsInline
-          preload="metadata"
-          tabIndex={-1}
-        />
-      ) : (
-        <div
-          className={`card-thumb${hasThumb ? "" : " placeholder"}`}
-          style={thumbStyle}
-        />
-      )}
+      {/* base thumbnail layer: gradient placeholder + instant static poster.
+          A preview (first card of a tab) overlays this once it starts playing. */}
+      <div className="card-thumb placeholder" style={{ background: gradient }}>
+        {poster && (
+          <img
+            className="card-thumb--img"
+            src={poster}
+            alt=""
+            loading="lazy"
+            draggable={false}
+            onLoad={(e) => e.currentTarget.classList.add("loaded")}
+            onError={(e) => {
+              e.currentTarget.style.display = "none";
+            }}
+          />
+        )}
+      </div>
 
       {/* inline muted auto-play preview; overlays the base when it has media */}
       {autoPreview && (
