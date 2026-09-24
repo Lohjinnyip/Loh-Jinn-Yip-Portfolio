@@ -126,7 +126,7 @@ export const PROJECTS = [
     role: "Editor · Motion Designer",
     tools: ["Premiere Pro", "After Effects"],
     thumbnail: "",
-    // 1280x720 (16:9) landscape
+    // 1920x1080 (16:9) landscape
     videoFile: "/videos/Crave%204D%20Cinematic.mp4",
     videoSrc: "",
     description: "Cinematic 4D showcase for Crave.",
@@ -140,7 +140,7 @@ export const PROJECTS = [
     role: "Editor · Motion Designer",
     tools: ["Premiere Pro", "After Effects"],
     thumbnail: "",
-    // 1280x720 (16:9) landscape
+    // 1920x1080 (16:9) landscape
     videoFile: "/videos/CRAVE%20ProductViu%20and%20Website.mp4",
     videoSrc: "",
     description: "ProductViu and website product showcase.",
