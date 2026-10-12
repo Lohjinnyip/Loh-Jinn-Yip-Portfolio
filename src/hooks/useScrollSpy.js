@@ -38,6 +38,10 @@ export function useScrollSpy(sectionIds, offset = 90) {
 }
 
 // Adds a `.visible` class to `.reveal` elements as they enter the viewport.
+// Triggers once the element's top is 12% above the viewport bottom, NOT on a
+// visible-ratio threshold: a ratio can never be reached by a section taller
+// than viewport/ratio (e.g. the one-column Work grid on a phone is ~8,000px,
+// so 12% of it never fits on screen and it stayed invisible).
 export function useReveal() {
   useEffect(() => {
     const els = document.querySelectorAll(".reveal");
@@ -50,7 +54,7 @@ export function useReveal() {
           }
         });
       },
-      { threshold: 0.12 }
+      { threshold: 0, rootMargin: "0px 0px -12% 0px" }
     );
     els.forEach((el) => io.observe(el));
     return () => io.disconnect();
