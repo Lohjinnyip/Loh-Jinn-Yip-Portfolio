@@ -41,9 +41,9 @@ export const PROJECTS = [
   {
     id: "p1",
     featured: true,
-    brief: "", // TODO: what did the client need?
-    process: "", // TODO: what did you personally do?
-    result: "", // TODO: outcome (verified numbers only)
+    brief: "Pitch film for a Crave 4D projection-mapping experience on the Melaka River, made for tourism partners and stakeholders.",
+    process: "Edited, graded and scored the film. Paced it from the river's heritage story into the projection visuals, with Malay title cards for the key figures and a closing partner reveal.",
+    result: "", // add a verified outcome (views, reach, client use) if you have one
     title: "Melaka River of Time",
     company: "company-a",
     category: "Trailer",
@@ -60,9 +60,9 @@ export const PROJECTS = [
   {
     id: "ca-qiby",
     featured: true,
-    brief: "", // TODO: what did the client need?
-    process: "", // TODO: what did you personally do?
-    result: "", // TODO: outcome (verified numbers only)
+    brief: "Concept film introducing QIBY, a handheld visitor companion for museums, zoos and aquariums, plus the collectible range sold after the visit.",
+    process: "Animated and edited the film, with English, Malay and Chinese subtitles showing how QIBY tells each exhibit's story.",
+    result: "", // add a verified outcome (views, reach, client use) if you have one
     title: "QIBY Intro",
     company: "company-a",
     category: "Intro",
@@ -89,13 +89,70 @@ export const PROJECTS = [
     videoSrc: "",
     description: "Brand intro animation.",
   },
+  // --- Crave Asia, latest (Nov 2026) ---
+  {
+    id: "ca-qsentry-ai-smart",
+    title: "QSentry AI Smart",
+    company: "company-a",
+    category: "Explainer",
+    year: "2026",
+    role: "Editor · Motion Designer",
+    tools: ["Premiere Pro", "After Effects"],
+    thumbnail: "",
+    // 1920x1080 (16:9) landscape
+    videoFile: "/videos/QSentry%20AI%20Smart.mp4",
+    videoSrc: "",
+    description: "Explainer for QSentry AI: turning existing CCTV into alerts for safety, hygiene, access and queues, then assigning follow-ups.",
+  },
+  {
+    id: "ca-qstudio-104",
+    title: "QStudio #104 Get New Customers",
+    company: "company-a",
+    category: "Social Ad",
+    year: "2026",
+    role: "Editor · Motion Designer",
+    tools: ["Premiere Pro", "After Effects"],
+    thumbnail: "",
+    vertical: true, // 1080x1920 (9:16)
+    videoFile: "/videos/QStudio%20104%20Get%20New%20Customers.mp4",
+    videoSrc: "",
+    description: "Social ad: following up free-trial visitors with a presale membership offer over WhatsApp.",
+  },
+  {
+    id: "ca-qstudio-119",
+    title: "QStudio #119 Spot Members Who Stopped Coming",
+    company: "company-a",
+    category: "Social Ad",
+    year: "2026",
+    role: "Editor · Motion Designer",
+    tools: ["Premiere Pro", "After Effects"],
+    thumbnail: "",
+    vertical: true, // 1080x1920 (9:16)
+    videoFile: "/videos/QStudio%20119%20Spot%20Members%20Who%20Stopped%20Coming.mp4",
+    videoSrc: "",
+    description: "Social ad: QStudio flags members who paid but stopped coming, then books them back in with a trainer.",
+  },
+  {
+    id: "ca-qstudio-095",
+    title: "QStudio #095 Boost Slow Days",
+    company: "company-a",
+    category: "Social Ad",
+    year: "2026",
+    role: "Editor · Motion Designer",
+    tools: ["Premiere Pro", "After Effects"],
+    thumbnail: "",
+    vertical: true, // 1080x1920 (9:16)
+    videoFile: "/videos/QStudio%20095%20Boost%20Slow%20Days%20With%20Comeback%20Offer.mp4",
+    videoSrc: "",
+    description: "Social ad: filling a quiet 2pm slot by sending inactive members a bring-a-friend comeback offer.",
+  },
   // --- Crave Asia, ranked best → worst (after the fixed first three above) ---
   {
     id: "ca-4d-cinematic",
     featured: true,
-    brief: "", // TODO: what did the client need?
-    process: "", // TODO: what did you personally do?
-    result: "", // TODO: outcome (verified numbers only)
+    brief: "Show what Crave 4D's immersive projection looks like in real venues: private dining, exhibition halls and event spaces.",
+    process: "Cut a wordless 36-second sequence that opens on a dark room and builds to full projection, then closes on the Crave 4D logo. Edited and added motion.",
+    result: "", // add a verified outcome (views, reach, client use) if you have one
     title: "Crave 4D Cinematic",
     company: "company-a",
     category: "Cinematic",
@@ -153,9 +210,9 @@ export const PROJECTS = [
   {
     id: "ca-toomuchlogin",
     featured: true,
-    brief: "", // TODO: what did the client need?
-    process: "", // TODO: what did you personally do?
-    result: "", // TODO: outcome (verified numbers only)
+    brief: "Short-form social skit for QPOS: get business owners to recognise the pain of juggling many systems, then show one login that does it all.",
+    process: "Edited the vertical skit: comic punch-in zooms and speed-line effects, a black-and-white frustration beat, bold captions, and dashboard screen recordings layered over the presenter.",
+    result: "", // add a verified outcome (views, reach, client use) if you have one
     title: "Too Much Login",
     company: "company-a",
     category: "Social",
@@ -171,9 +228,9 @@ export const PROJECTS = [
   {
     id: "ca-qsentry-cinematic",
     featured: true,
-    brief: "", // TODO: what did the client need?
-    process: "", // TODO: what did you personally do?
-    result: "", // TODO: outcome (verified numbers only)
+    brief: "Premium brand film for a smart access setup: kiosks, turnstiles, face check-in and tailgating alerts in a high-end gym.",
+    process: "Edited and graded to a dark, warm luxury look. Built the cut around a member's arrival-to-entry journey, with the tailgating alert as the turning point.",
+    result: "", // add a verified outcome (views, reach, client use) if you have one
     title: "QSentry Cinematic",
     company: "company-a",
     category: "Cinematic",
