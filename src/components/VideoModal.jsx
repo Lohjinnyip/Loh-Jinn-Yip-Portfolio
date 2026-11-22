@@ -282,8 +282,18 @@ export default function VideoModal({
             <div><dt>Year</dt><dd>{project.year}</dd></div>
             <div><dt>Type of work</dt><dd>{project.category}</dd></div>
             <div><dt>My role</dt><dd>{project.role || "Video Editor"}</dd></div>
+            {project.tools?.length > 0 && (
+              <div><dt>Tools</dt><dd>{project.tools.join(", ")}</dd></div>
+            )}
           </dl>
           {project.description && <p>{project.description}</p>}
+          {(project.brief || project.process || project.result) && (
+            <dl className="modal-case">
+              {project.brief && <div><dt>The brief</dt><dd>{project.brief}</dd></div>}
+              {project.process && <div><dt>What I did</dt><dd>{project.process}</dd></div>}
+              {project.result && <div><dt>Result</dt><dd>{project.result}</dd></div>}
+            </dl>
+          )}
         </div>
 
         {(hasPrev || hasNext) && hint !== "gone" && (

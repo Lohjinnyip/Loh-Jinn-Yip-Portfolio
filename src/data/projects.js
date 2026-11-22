@@ -22,6 +22,12 @@
 //                     "/videos/myclip.mp4". Put the .mp4 in /public/videos/.
 //       description : (optional) short blurb shown in the player popup.
 //       vertical    : (optional) set `true` for portrait / 9:16 clips.
+//       featured    : (optional) `true` → shown in the first few cards of its
+//                     tab; everything else sits behind "Show all".
+//       brief       : (optional, case study) what the client needed / the problem.
+//       process     : (optional, case study) what YOU personally did and how.
+//       result      : (optional, case study) the outcome. Only verified numbers.
+//                     Leave any of these "" and that line is hidden.
 //
 // ============================================================================
 
@@ -34,6 +40,10 @@ export const COMPANIES = [
 export const PROJECTS = [
   {
     id: "p1",
+    featured: true,
+    brief: "", // TODO: what did the client need?
+    process: "", // TODO: what did you personally do?
+    result: "", // TODO: outcome (verified numbers only)
     title: "Melaka River of Time",
     company: "company-a",
     category: "Trailer",
@@ -49,6 +59,10 @@ export const PROJECTS = [
   // --- Crave Asia imports (rename titles/categories to the real ones anytime) ---
   {
     id: "ca-qiby",
+    featured: true,
+    brief: "", // TODO: what did the client need?
+    process: "", // TODO: what did you personally do?
+    result: "", // TODO: outcome (verified numbers only)
     title: "QIBY Intro",
     company: "company-a",
     category: "Intro",
@@ -78,6 +92,10 @@ export const PROJECTS = [
   // --- Crave Asia, ranked best → worst (after the fixed first three above) ---
   {
     id: "ca-4d-cinematic",
+    featured: true,
+    brief: "", // TODO: what did the client need?
+    process: "", // TODO: what did you personally do?
+    result: "", // TODO: outcome (verified numbers only)
     title: "Crave 4D Cinematic",
     company: "company-a",
     category: "Cinematic",
@@ -134,6 +152,10 @@ export const PROJECTS = [
   },
   {
     id: "ca-toomuchlogin",
+    featured: true,
+    brief: "", // TODO: what did the client need?
+    process: "", // TODO: what did you personally do?
+    result: "", // TODO: outcome (verified numbers only)
     title: "Too Much Login",
     company: "company-a",
     category: "Social",
@@ -148,6 +170,10 @@ export const PROJECTS = [
   },
   {
     id: "ca-qsentry-cinematic",
+    featured: true,
+    brief: "", // TODO: what did the client need?
+    process: "", // TODO: what did you personally do?
+    result: "", // TODO: outcome (verified numbers only)
     title: "QSentry Cinematic",
     company: "company-a",
     category: "Cinematic",
@@ -516,6 +542,7 @@ export const PROJECTS = [
   //     card shows the clip's own first frame. -----------------------------------
   {
     id: "sb-blender-1",
+    featured: true,
     title: "Blender 1",
     company: "company-b",
     category: "Product",
@@ -544,6 +571,7 @@ export const PROJECTS = [
   },
   {
     id: "sb-headlight-1",
+    featured: true,
     title: "Headlight 1",
     company: "company-b",
     category: "Product",
@@ -572,6 +600,7 @@ export const PROJECTS = [
   },
   {
     id: "sb-makeup-1",
+    featured: true,
     title: "Makeup 1",
     company: "company-b",
     category: "Product",
@@ -600,6 +629,7 @@ export const PROJECTS = [
   },
   {
     id: "sb-motion-1",
+    featured: true,
     title: "Motion Light 1",
     company: "company-b",
     category: "Product",
@@ -628,6 +658,7 @@ export const PROJECTS = [
   },
   {
     id: "sb-prayer-1",
+    featured: true,
     title: "Prayer Bowl 1",
     company: "company-b",
     category: "Product",
@@ -656,6 +687,7 @@ export const PROJECTS = [
   },
   {
     id: "sb-toolbox-1",
+    featured: true,
     title: "Toolbox 1",
     company: "company-b",
     category: "Product",
@@ -686,6 +718,7 @@ export const PROJECTS = [
   //     1080x1920 / 9:16 → vertical: true). thumbnail:"" → card shows first frame.
   {
     id: "ac-avoid-boss",
+    featured: true,
     title: "Ways to Avoid Boss",
     company: "company-c",
     category: "Social",
@@ -699,6 +732,7 @@ export const PROJECTS = [
   },
   {
     id: "ac-free-time",
+    featured: true,
     title: "Dr's Free Time",
     company: "company-c",
     category: "Social",
@@ -712,6 +746,7 @@ export const PROJECTS = [
   },
   {
     id: "ac-peeking",
+    featured: true,
     title: "Getting Caught Peeking",
     company: "company-c",
     category: "Social",
@@ -738,6 +773,7 @@ export const PROJECTS = [
   },
   {
     id: "ac-botox",
+    featured: true,
     title: "Dr. Leong Botox",
     company: "company-c",
     category: "Social",
@@ -764,6 +800,7 @@ export const PROJECTS = [
   },
   {
     id: "ac-picoway",
+    featured: true,
     title: "PicoWay Explanation",
     company: "company-c",
     category: "Explainer",
@@ -790,6 +827,7 @@ export const PROJECTS = [
   },
   {
     id: "ac-ultraformer",
+    featured: true,
     title: "Ultraformer MPT Explanation",
     company: "company-c",
     category: "Explainer",

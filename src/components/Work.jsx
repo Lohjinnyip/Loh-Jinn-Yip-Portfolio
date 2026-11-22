@@ -7,6 +7,9 @@ import { asset, posterFor } from "../utils/asset";
 
 // Duration of the card swap animation — MUST match the CSS transition on `.grid`.
 const ANIM_MS = 200;
+// Cards shown per tab before "Show all". Projects marked `featured: true` in
+// projects.js fill these slots first; without any, the first N in list order.
+const FEATURED_COUNT = 6;
 
 export default function Work() {
   const openShowreel = useShowreel();
@@ -26,14 +29,27 @@ export default function Work() {
     []
   );
 
-  const visible = useMemo(
-    () => PROJECTS.filter((p) => p.company === display),
-    [display]
+  const [showAll, setShowAll] = useState(false);
+
+  // All of this tab's projects, featured ones first. The grid renders a prefix
+  // of this list, so modal prev/next can still browse every video.
+  const visible = useMemo(() => {
+    const all = PROJECTS.filter((p) => p.company === display);
+    return [...all.filter((p) => p.featured), ...all.filter((p) => !p.featured)];
+  }, [display]);
+
+  const hasShowreel = display === COMPANIES[0].id;
+  const featuredCount = Math.max(
+    visible.filter((p) => p.featured).length,
+    FEATURED_COUNT - (hasShowreel ? 1 : 0)
   );
+  const shown = showAll ? visible : visible.slice(0, featuredCount);
+  const hiddenCount = visible.length - shown.length;
 
   // switching tabs shows a different first video → forget the old preview time
   useEffect(() => {
     previewTimeRef.current = 0;
+    setShowAll(false);
   }, [display]);
 
   // Prefetch the OTHER tabs' poster thumbnails while the browser is idle, one at
@@ -120,7 +136,7 @@ export default function Work() {
 
         <div className={gridClass}>
           {/* Featured showreel — first card, Crave Asia tab only. Opens the modal. */}
-          {display === COMPANIES[0].id && (
+          {hasShowreel && (
             <button
               className="card card--showreel"
               style={{ "--card-accent": "#22d3ee" }}
@@ -136,12 +152,12 @@ export default function Work() {
               <div className="card-overlay">
                 <span className="card-badge">Showreel</span>
                 <span className="card-title">2026 Creative Showreel</span>
-                <span className="card-meta">Video Editing · Content Creation · AI Visuals</span>
+                <span className="card-meta">Video Editing · Content Creation · Motion</span>
               </div>
             </button>
           )}
 
-          {visible.map((p, i) => (
+          {shown.map((p, i) => (
             <VideoCard
               key={p.id}
               project={p}
@@ -160,6 +176,25 @@ export default function Work() {
             <p className="empty">No videos in this category yet.</p>
           )}
         </div>
+
+        {visible.length > featuredCount && (
+          <div className="work-more">
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={() => {
+                // collapsing from far down the list → bring the grid back into view
+                if (showAll) document.getElementById("work")?.scrollIntoView({ behavior: "smooth" });
+                setShowAll(!showAll);
+              }}
+              aria-expanded={showAll}
+            >
+              {showAll
+                ? "Show fewer"
+                : `Show all ${visible.length} videos (${hiddenCount} more)`}
+            </button>
+          </div>
+        )}
         </div>
       </div>
 

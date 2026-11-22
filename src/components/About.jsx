@@ -7,7 +7,7 @@ const SKILLS = [
   "Sound Design",
   "Storyboarding",
   "Short-form / Social",
-  "Front-End AI Developer",
+  "Motion Graphics",
 ];
 
 const STATS = [
@@ -43,22 +43,21 @@ export default function About() {
                 Behind the Cut
               </h2>
               <p className="about-roles">
-                Video Editor · Content Creator · AI Visual Creator · Front-End AI
-                Developer
+                Video Editor · Content Creator
               </p>
               <p>
-                I'm Loh Jinn Yip — a <strong>Video Editor</strong>,{" "}
-                <strong>Content Creator</strong>, and{" "}
-                <strong>AI Visual Creator</strong>. I specialise in commercial
-                videos, product showcases, and social ads that hold attention —
-                including AI-generated video and photo.
+                I'm Loh Jinn Yip, a <strong>Video Editor</strong> and{" "}
+                <strong>Content Creator</strong> based in Kuala Lumpur. I make
+                commercial videos, product showcases, and short-form social
+                content that holds attention, and I use AI video and photo tools
+                when they help a project.
               </p>
               <p>
-                Across three companies I've owned production end to end — from
-                storyboarding to editing, motion, color and final delivery. I
-                also build <strong>interactive, web-based experiences</strong>,
-                using AI tools like Claude to prototype sites and interfaces
-                fast. This site is one of them.
+                Across three companies I've worked through the whole production
+                process: storyboarding, editing, motion, color and final
+                delivery. On the side I build interactive web pieces with React
+                and Three.js, using AI tools like Claude to move fast. This
+                site, including its 3D city, is one of them.
               </p>
               <div className="skills">
                 {SKILLS.map((s) => (

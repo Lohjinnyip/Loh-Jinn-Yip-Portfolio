@@ -10,14 +10,14 @@ export default function Hero() {
           <span className="badge">
             <span className="badge-dot" /> Available for hire · Kuala Lumpur
           </span>
-          <p className="eyebrow">Video Editor • Content Creator • Front-End AI Developer</p>
+          <p className="eyebrow">Video Editor &amp; Content Creator</p>
           <h1>
             Stories told <br />
             after <span className="gradient-text">dark.</span>
           </h1>
           <p className="tagline">
-            Commercial videos, product storytelling, interactive media, and
-            AI-powered visuals.
+            Commercial videos, product storytelling, and short-form social
+            content, with AI-assisted visuals when the brief calls for it.
           </p>
           <div className="hero-cta">
             <button type="button" className="btn btn-primary" onClick={openShowreel}>
@@ -58,7 +58,7 @@ export default function Hero() {
             />
             <span className="portrait-name">
               Loh Jinn Yip
-              <em>Video Editor</em>
+              <em>Video Editor &amp; Content Creator</em>
             </span>
           </div>
         </div>

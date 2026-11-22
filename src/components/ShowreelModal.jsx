@@ -80,7 +80,7 @@ function ShowreelModal({ onClose }) {
 
           <div className="modal-body">
             <h3>2026 Creative Showreel</h3>
-            <div className="meta">Video Editing · Content Creation · AI Visuals</div>
+            <div className="meta">Video Editing · Content Creation · Motion</div>
           </div>
         </div>
       </div>
